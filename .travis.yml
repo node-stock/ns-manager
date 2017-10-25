@@ -4,6 +4,5 @@ node_js:
   - "8"
 
 before_script:
-- npm install
 - mysql -u root -e 'create database test;'
 - mysql -u root test < config/init.sql
