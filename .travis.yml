@@ -1,0 +1,9 @@
+language: node_js
+
+node_js:
+  - "8"
+
+before_script:
+- npm install
+- mysql -u root -e 'create database travis_db;'
+- mysql -u root travis_db < config/init.sql
