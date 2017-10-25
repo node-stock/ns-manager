@@ -5,5 +5,5 @@ node_js:
 
 before_script:
 - npm install
-- mysql -u root -e 'create database travis_db;'
-- mysql -u root travis_db < config/init.sql
+- mysql -u root -e 'create database test;'
+- mysql -u root test < config/init.sql
