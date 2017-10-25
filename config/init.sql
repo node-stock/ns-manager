@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `signal` (
+CREATE TABLE IF NOT EXISTS `Signal` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `symbol` varchar(20) DEFAULT NULL,
   `timeframe` varchar(10) DEFAULT NULL,
