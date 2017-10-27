@@ -6,7 +6,7 @@ const signalManager = new SignalManager();
 const testSetSignal = async (done: any) => {
   const res = await signalManager.setSignal({
     symbol: '6664',
-    side: '1',
+    side: 'buy',
     price: 2000,
     timeframe: '5min'
   })
@@ -18,7 +18,7 @@ const testSetSignal = async (done: any) => {
 const testGetSignal = async (done: any) => {
   const signal = await signalManager.getSignal({
     symbol: '6664',
-    side: '1'
+    side: 'buy'
   })
   console.log(signal);
   assert(signal.symbol === '6664')
@@ -28,7 +28,7 @@ const testGetSignal = async (done: any) => {
 const testRemoveSignal = async (done: any) => {
   const signal = await signalManager.getSignal({
     symbol: '6664',
-    side: '1'
+    side: 'buy'
   })
   const res = await signalManager.removeSignal(signal.id);
   console.log(res);

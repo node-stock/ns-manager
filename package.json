@@ -19,8 +19,7 @@
   "dependencies": {
     "moment": "^2.19.0",
     "ns-common": "0.0.11",
-    "ns-store": "0.0.14",
-    "rimraf": "^2.6.2"
+    "ns-store": "0.0.14"
   },
   "devDependencies": {
     "@types/cheerio": "0.22.2",
@@ -38,6 +37,7 @@
     "power-assert": "^1.4.4",
     "ts-node": "^3.3.0",
     "tslint": "^5.6.0",
-    "typescript": "^2.4.2"
+    "typescript": "^2.4.2",
+    "rimraf": "^2.6.2"
   }
 }

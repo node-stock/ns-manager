@@ -4,7 +4,7 @@
     "database": "test",
     "dialect": "mysql",
     "username": "root",
-    "password": null,
+    "password": "",
     "timezone": "+09:00",
     "operatorsAliases": false,
     "logging": false
