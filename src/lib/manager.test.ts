@@ -1,4 +1,5 @@
 import * as assert from 'power-assert';
+import { OrderSide } from 'ns-types';
 import { SignalManager } from './manager';
 
 const signalManager = new SignalManager();
@@ -6,7 +7,7 @@ const signalManager = new SignalManager();
 const testSetSignal = async (done: any) => {
   const res = await signalManager.setSignal({
     symbol: '6664',
-    side: 'buy',
+    side: OrderSide.Buy,
     price: 2000,
     timeframe: '5min'
   })
@@ -18,7 +19,7 @@ const testSetSignal = async (done: any) => {
 const testGetSignal = async (done: any) => {
   const signal = await signalManager.getSignal({
     symbol: '6664',
-    side: 'buy'
+    side: OrderSide.Buy
   })
   console.log(signal);
   assert(signal.symbol === '6664')
@@ -28,7 +29,7 @@ const testGetSignal = async (done: any) => {
 const testRemoveSignal = async (done: any) => {
   const signal = await signalManager.getSignal({
     symbol: '6664',
-    side: 'buy'
+    side: OrderSide.Buy
   })
   const res = await signalManager.removeSignal(signal.id);
   console.log(res);
