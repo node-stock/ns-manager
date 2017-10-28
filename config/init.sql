@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS `Signal` (
   `timeframe` varchar(10) DEFAULT NULL,
   `side` char(4) DEFAULT NULL,
   `price` float DEFAULT NULL,
+  `notes` varchar(80) DEFAULT NULL,
   `created_at` varchar(255) DEFAULT NULL,
   `updated_at` varchar(255) DEFAULT NULL,
   `deleted_at` varchar(255) DEFAULT NULL,

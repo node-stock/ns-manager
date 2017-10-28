@@ -9,7 +9,8 @@ const testSetSignal = async (done: any) => {
     symbol: '6664',
     side: OrderSide.Buy,
     price: 2000,
-    timeframe: '5min'
+    timeframe: '5min',
+    notes: '备注项目'
   })
   console.log(res);
   assert(res);
