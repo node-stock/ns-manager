@@ -1,4 +1,5 @@
 import { Store as db } from 'ns-store';
+import { Signal } from 'ns-types';
 
 /**
   * @class
@@ -11,13 +12,6 @@ export class Manager {
   destroy() {
     db.close();
   }
-}
-
-export interface Signal {
-  symbol: string,
-  side: string,
-  price?: number,
-  timeframe?: string
 }
 /**
   * @class

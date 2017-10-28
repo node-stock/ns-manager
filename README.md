@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/node-stock/ns-manager.svg?branch=master)](https://www.travis-ci.org/node-stock/ns-manager)
-
 # ns-manager
+
+[![Build Status](https://travis-ci.org/node-stock/ns-manager.svg?branch=master)](https://www.travis-ci.org/node-stock/ns-manager)
 
 node-stock 管理模块
 
