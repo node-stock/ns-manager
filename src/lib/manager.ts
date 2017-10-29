@@ -1,5 +1,6 @@
 import { Store as db } from 'ns-store';
 import { Signal } from 'ns-types';
+import { any } from 'bluebird';
 
 /**
   * @class
@@ -7,22 +8,25 @@ import { Signal } from 'ns-types';
   */
 export class SignalManager {
 
-  async getSignal(signalOpt: Signal): Promise<any> {
-    return await db.model.Signal.find({
+  async get(signalOpt: Signal): Promise<any> {
+    const findOpt = <{ [Attr: string]: any }>{
       raw: true,
       where: {
-        symbol: signalOpt.symbol,
-        side: signalOpt.side
+        symbol: signalOpt.symbol
       }
-    });
+    };
+    if (signalOpt.side) {
+      findOpt.where.side = signalOpt.side;
+    }
+    return await db.model.Signal.find(findOpt);
   }
 
-  async setSignal(signalOpt: Signal) {
+  async set(signalOpt: Signal) {
     // 写入数据库
     return await db.model.Signal.upsert(signalOpt);
   }
 
-  async removeSignal(id: string) {
+  async remove(id: string) {
     return await db.model.Signal.destroy({
       where: {
         id: id
