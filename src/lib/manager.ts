@@ -3,25 +3,9 @@ import { Signal } from 'ns-types';
 
 /**
   * @class
-  * @classdesc 管理器
-  */
-export class Manager {
-  constructor() {
-    db.init(require('config').store);
-  }
-  destroy() {
-    db.close();
-  }
-}
-/**
-  * @class
   * @classdesc 信号管理器
   */
-export class SignalManager extends Manager {
-
-  constructor() {
-    super();
-  }
+export class SignalManager {
 
   async getSignal(signalOpt: Signal): Promise<any> {
     return await db.model.Signal.find({
@@ -44,5 +28,20 @@ export class SignalManager extends Manager {
         id: id
       }
     });
+  }
+}
+
+/**
+  * @class
+  * @classdesc 管理器
+  */
+export class Manager {
+  signal: SignalManager;
+  constructor() {
+    db.init(require('config').store);
+    this.signal = new SignalManager();
+  }
+  destroy() {
+    db.close();
   }
 }
