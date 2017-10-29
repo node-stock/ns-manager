@@ -1,6 +1,5 @@
 import { Store as db } from 'ns-store';
 import { Signal } from 'ns-types';
-import { any } from 'bluebird';
 
 /**
   * @class
@@ -21,7 +20,7 @@ export class SignalManager {
     return await db.model.Signal.find(findOpt);
   }
 
-  async set(signalOpt: Signal) {
+  async set(signalOpt: { [Attr: string]: any }) {
     // 写入数据库
     return await db.model.Signal.upsert(signalOpt);
   }
