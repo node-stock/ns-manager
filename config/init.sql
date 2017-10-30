@@ -33,7 +33,7 @@ CREATE TABLE `Position` (
   `deleted_at` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `account_id` (`account_id`),
-  CONSTRAINT `position_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `position_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='持仓';
 
 CREATE TABLE `Transaction` (
@@ -49,5 +49,5 @@ CREATE TABLE `Transaction` (
   `deleted_at` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `account_id` (`account_id`),
-  CONSTRAINT `transaction_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `account` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `transaction_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `Account` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8 COMMENT='交易记录';
