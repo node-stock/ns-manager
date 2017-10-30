@@ -1,6 +1,6 @@
 {
   "name": "ns-manager",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "node-stock manager module",
   "repository": {
     "type": "git",
@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "ns-common": "0.0.11",
-    "ns-store": "0.0.17",
+    "ns-store": "0.0.21",
     "ns-types": "0.0.4"
   },
   "devDependencies": {
