@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "ns-common": "0.0.11",
-    "ns-store": "0.0.21",
+    "ns-store": "0.0.22",
     "ns-types": "0.0.4"
   },
   "devDependencies": {

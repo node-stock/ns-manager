@@ -1,6 +1,7 @@
 import * as assert from 'power-assert';
 import { OrderSide, LimitOrder, OrderType, TradeType, EventType } from 'ns-types';
 import { Manager } from './manager';
+import { Store as db } from 'ns-store';
 
 const manager = new Manager();
 
@@ -48,6 +49,14 @@ const testRemoveSignal = async (done: any) => {
 
 const testGetBalance = async (done: any) => {
 
+  const res = await db.model.Account.findById('test');
+  console.log('Account: ', res)
+  if (!res) {
+    await db.model.Account.upsert({
+      id: 'test',
+      balance: 300000
+    });
+  }
   const balance = await manager.asset.getBalance('test');
   console.log(balance);
   assert(true);
@@ -94,7 +103,6 @@ const testSellTrader = async (done: any) => {
   assert(true);
   done();
 }
-
 
 describe('ns-manager', () => {
   it('存储信号', function (done) {
