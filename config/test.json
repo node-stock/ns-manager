@@ -1,7 +1,7 @@
 {
   "store": {
     "host": "127.0.0.1",
-    "database": "test2",
+    "database": "test",
     "dialect": "mysql",
     "username": "root",
     "password": "",
