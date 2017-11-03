@@ -1,6 +1,6 @@
 {
   "name": "ns-manager",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "node-stock manager module",
   "repository": {
     "type": "git",
@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "ns-common": "0.0.11",
-    "ns-store": "0.0.22",
-    "ns-types": "0.0.4"
+    "ns-store": "0.0.23",
+    "ns-types": "0.0.7"
   },
   "devDependencies": {
     "@types/cheerio": "0.22.2",
