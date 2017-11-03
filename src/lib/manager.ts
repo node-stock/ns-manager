@@ -1,5 +1,5 @@
 import { Store as db } from 'ns-store';
-import { Signal, LimitOrder, OrderSide } from 'ns-types';
+import { Model, LimitOrder, OrderSide } from 'ns-types';
 
 /**
   * @class
@@ -7,22 +7,22 @@ import { Signal, LimitOrder, OrderSide } from 'ns-types';
   */
 export class SignalManager {
 
-  async get(signalOpt: Signal): Promise<{ [Attr: string]: any }> {
+  async get(signal: Model.Signal): Promise<Model.Signal | null> {
     const findOpt = <{ [Attr: string]: any }>{
       raw: true,
       where: {
-        symbol: signalOpt.symbol
+        symbol: signal.symbol
       }
     };
-    if (signalOpt.side) {
-      findOpt.where.side = signalOpt.side;
+    if (signal.side) {
+      findOpt.where.side = signal.side;
     }
-    return <{ [Attr: string]: any }>await db.model.Signal.find(findOpt);
+    return <Model.Signal | null>await db.model.Signal.find(findOpt);
   }
 
-  async set(signalOpt: { [Attr: string]: any }) {
+  async set(signal: Model.Signal) {
     // 写入数据库
-    return await db.model.Signal.upsert(signalOpt);
+    return await db.model.Signal.upsert(signal);
   }
 
   async remove(id: string) {
@@ -33,7 +33,6 @@ export class SignalManager {
     });
   }
 }
-
 
 /**
   * @class
@@ -105,17 +104,51 @@ export class TraderManager {
 
 /**
   * @class
-  * @classdesc 管理器
+  * @classdesc 持仓管理器
+  */
+export class PositionManager {
+
+  async get(position: Model.Position): Promise<Model.Position> {
+    const findOpt = {
+      raw: true,
+      where: {
+        symbol: position.symbol,
+        account_id: position.account_id,
+        side: position.side
+      }
+    };
+    return <Model.Position>await db.model.Signal.find(findOpt);
+  }
+
+  async set(position: Model.Position) {
+    // 写入数据库
+    return await db.model.Signal.upsert(position);
+  }
+
+  async remove(id: string) {
+    return await db.model.Signal.destroy({
+      where: {
+        id: id
+      }
+    });
+  }
+}
+
+/**
+  * @class
+  * @classdesc 综合管理器
   */
 export class Manager {
   signal: SignalManager;
   asset: AssetManager;
   trader: TraderManager;
+  position: PositionManager;
   constructor() {
     db.init(require('config').store);
     this.signal = new SignalManager();
     this.asset = new AssetManager();
     this.trader = new TraderManager();
+    this.position = new PositionManager();
   }
   destroy() {
     db.close();

@@ -25,14 +25,20 @@ const testGetSignal = async (done: any) => {
   };
   const signal = await manager.signal.get(findOpt);
   console.log(`where:${JSON.stringify(findOpt)} \nsignal:`, signal);
-  assert(signal.symbol === '6664')
+  assert(signal);
+  if (signal) {
+    assert(signal.symbol === '6664');
+  }
 
   const findOpt2 = {
     symbol: '6664'
   };
   const signal2 = await manager.signal.get(findOpt2);
   console.log(`\nwhere:${JSON.stringify(findOpt2)} \nsignal:`, signal2);
-  assert(signal2.symbol === '6664')
+  assert(signal2);
+  if (signal2) {
+    assert(signal2.symbol === '6664');
+  }
   done();
 }
 
@@ -41,9 +47,12 @@ const testRemoveSignal = async (done: any) => {
     symbol: '6664',
     side: OrderSide.Buy
   })
-  const res = await manager.signal.remove(signal.id);
-  console.log(res);
-  assert(res);
+  assert(signal);
+  if (signal && signal.id) {
+    const res = await manager.signal.remove(signal.id);
+    console.log(res);
+    assert(res);
+  }
   done();
 }
 
@@ -103,6 +112,8 @@ const testSellTrader = async (done: any) => {
   assert(true);
   done();
 }
+
+// TODO PositionManager test
 
 describe('ns-manager', () => {
   it('存储信号', function (done) {
