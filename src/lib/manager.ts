@@ -17,6 +17,9 @@ export class SignalManager {
     if (signal.side) {
       findOpt.where.side = signal.side;
     }
+    if (signal.mocktime) {
+      findOpt.raw.where.mocktime = signal.mocktime;
+    }
     return <Model.Signal | null>await db.model.Signal.find(findOpt);
   }
 
@@ -56,12 +59,13 @@ export class AssetManager {
 export class TraderManager {
 
   async set(account: { id: string, balance: number }, order: LimitOrder) {
-    const orderData = {
+    const orderData: { [Attr: string]: any } = {
       account_id: account.id,
       symbol: order.symbol,
       side: order.side,
       price: order.price,
-      quantity: order.amount
+      quantity: order.amount,
+      mocktime: order.time
     };
 
     // 保存交易记录
@@ -108,8 +112,8 @@ export class TraderManager {
   */
 export class PositionManager {
 
-  async get(position: Model.Position): Promise<Model.Position> {
-    const findOpt = {
+  async get(position: Model.Position): Promise<Model.Position | null> {
+    const findOpt: { [Attr: string]: any } = {
       raw: true,
       where: {
         symbol: position.symbol,
@@ -117,7 +121,10 @@ export class PositionManager {
         side: position.side
       }
     };
-    return <Model.Position>await db.model.Signal.find(findOpt);
+    if (position.mocktime) {
+      findOpt.where.mocktime = position.mocktime;
+    }
+    return <Model.Position | null>await db.model.Signal.find(findOpt);
   }
 
   async set(position: Model.Position) {
