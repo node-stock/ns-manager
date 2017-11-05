@@ -124,16 +124,16 @@ export class PositionManager {
     if (position.mocktime) {
       findOpt.where.mocktime = position.mocktime;
     }
-    return <Model.Position | null>await db.model.Signal.find(findOpt);
+    return <Model.Position | null>await db.model.Position.find(findOpt);
   }
 
   async set(position: Model.Position) {
     // 写入数据库
-    return await db.model.Signal.upsert(position);
+    return await db.model.Position.upsert(position);
   }
 
   async remove(id: string) {
-    return await db.model.Signal.destroy({
+    return await db.model.Position.destroy({
       where: {
         id: id
       }
