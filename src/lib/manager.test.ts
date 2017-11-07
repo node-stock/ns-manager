@@ -1,7 +1,7 @@
 import * as assert from 'power-assert';
 import { OrderSide, LimitOrder, OrderType, TradeType, EventType } from 'ns-types';
 import { Manager } from './manager';
-import { Store as db } from 'ns-store';
+import { Store as db, Account } from 'ns-store';
 
 const manager = new Manager();
 
@@ -56,9 +56,10 @@ const testRemoveSignal = async (done: any) => {
   done();
 }
 
-const testGetBalance = async (done: any) => {
-
-  const res = await db.model.Account.findById('test');
+const testGetAsset = async (done: any) => {
+  const res = await manager.asset.get('backtest1');
+  console.log(res)
+  /*const res = await db.model.Account.findById('test');
   console.log('Account: ', res)
   if (!res) {
     await db.model.Account.upsert({
@@ -71,7 +72,7 @@ const testGetBalance = async (done: any) => {
   assert(true);
   const balance2 = await manager.asset.getBalance('testxxx');
   console.log(balance2);
-  assert(balance2 === 0);
+  assert(balance2 === 0);*/
   done();
 }
 
@@ -89,7 +90,7 @@ const testBuyTrader = async (done: any) => {
     id: 'test',
     balance: 300000
   }
-  await manager.trader.set(account, order);
+  await manager.trader.set(<Account>account, order);
   assert(true);
   done();
 }
@@ -104,11 +105,8 @@ const testSellTrader = async (done: any) => {
     price: 2100,
     amount: 100
   };
-  const account = {
-    id: 'test',
-    balance: await manager.asset.getBalance('test')
-  }
-  await manager.trader.set(account, order);
+  const account = await manager.asset.get('test');
+  await manager.trader.set(<Account>account, order);
   assert(true);
   done();
 }
@@ -128,9 +126,9 @@ describe('ns-manager', () => {
     this.timeout(20000);
     testRemoveSignal(done);
   });
-  it('获取余额', function (done) {
+  it('获取资产', function (done) {
     this.timeout(20000);
-    testGetBalance(done);
+    testGetAsset(done);
   });
   it('记录买单交易', function (done) {
     this.timeout(20000);

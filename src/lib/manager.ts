@@ -1,5 +1,6 @@
-import { Store as db } from 'ns-store';
-import { Model, LimitOrder, OrderSide } from 'ns-types';
+import { Store as db, Position } from 'ns-store';
+import * as types from 'ns-types';
+import { access } from 'fs';
 
 /**
   * @class
@@ -7,7 +8,7 @@ import { Model, LimitOrder, OrderSide } from 'ns-types';
   */
 export class SignalManager {
 
-  async get(signal: Model.Signal): Promise<Model.Signal | null> {
+  async get(signal: types.Model.Signal): Promise<types.Model.Signal | null> {
     const findOpt = <{ [Attr: string]: any }>{
       raw: true,
       where: {
@@ -17,22 +18,21 @@ export class SignalManager {
     if (signal.side) {
       findOpt.where.side = signal.side;
     }
-    if (signal.mocktime) {
+    if (signal.backtest) {
+      findOpt.raw.where.backtest = signal.backtest;
       findOpt.raw.where.mocktime = signal.mocktime;
     }
-    return <Model.Signal | null>await db.model.Signal.find(findOpt);
+    return <types.Model.Signal | null>await db.model.Signal.find(findOpt);
   }
 
-  async set(signal: Model.Signal) {
+  async set(signal: types.Model.Signal) {
     // 写入数据库
     return await db.model.Signal.upsert(signal);
   }
 
   async remove(id: string) {
     return await db.model.Signal.destroy({
-      where: {
-        id: id
-      }
+      where: { id }
     });
   }
 }
@@ -43,12 +43,22 @@ export class SignalManager {
   */
 export class AssetManager {
 
-  async getBalance(accountId: string): Promise<number> {
-    const res = <{ balance: number } | null>await db.model.Account.findById(accountId, {
-      raw: true,
-      attributes: ['balance']
+  async get(accountId: string): Promise<types.Model.Account | null> {
+    const account = <types.Model.Account | null>await db.model.Account.findById(accountId, {
+      raw: true
     });
-    return res ? res.balance : 0;
+    if (account) {
+      const positions = await db.model.Position.findAll({
+        raw: true,
+        where: {
+          account_id: accountId
+        }
+      });
+      if (positions) {
+        account.positions = <Position[]>positions;
+      }
+    }
+    return account;
   }
 }
 
@@ -58,50 +68,60 @@ export class AssetManager {
   */
 export class TraderManager {
 
-  async set(account: { id: string, balance: number }, order: LimitOrder) {
+  async set(account: types.Model.Account, order: types.LimitOrder) {
     const orderData: { [Attr: string]: any } = {
       account_id: account.id,
       symbol: order.symbol,
       side: order.side,
       price: order.price,
       quantity: order.amount,
-      mocktime: order.time
+      backtest: order.backtest,
+      mocktime: order.mocktime
     };
 
     // 保存交易记录
     await db.model.Transaction.upsert(orderData);
-
     // 买入操作
-    if (order.side === OrderSide.Buy) {
+    if (order.side === types.OrderSide.Buy) {
       // 开仓
       await db.model.Position.upsert(orderData);
       // 更新账户资产
       await db.model.Account.upsert({
         id: account.id,
         // 余额 = 当前余额 - (股价*股数+500手续费)
-        balance: account.balance - (order.price * order.amount + 500)
+        balance: <number>account.balance - (order.price * order.amount + 500)
       });
-    } else if (order.side === OrderSide.Sell) {
-      orderData.side = OrderSide.Buy;
+    } else if (order.side === types.OrderSide.Sell) {
+      orderData.side = types.OrderSide.Buy;
       delete orderData.price;
-      // 清仓
-      await db.model.Position.destroy({
-        where: orderData
-      });
+      delete orderData.mocktime;
+      // 查询是否有持仓
+      if (account.positions) {
+        const position = account.positions.find((posi) => {
+          return posi.symbol === String(order.symbol) && posi.side === types.OrderSide.Buy;
+        });
+        if (position) {
+          // 清仓
+          await db.model.Position.destroy({
+            where: {
+              id: <number>position.id
+            }
+          });
+        }
+      }
+
       // 更新账户资产
       await db.model.Account.upsert({
         id: account.id,
         // 余额 = 当前余额 + (股价*股数-500手续费)
-        balance: account.balance + (order.price * order.amount - 500)
+        balance: <number>account.balance + (order.price * order.amount - 500)
       });
     }
   }
 
   async remove(id: string) {
     return await db.model.Signal.destroy({
-      where: {
-        id: id
-      }
+      where: { id }
     });
   }
 }
@@ -112,7 +132,7 @@ export class TraderManager {
   */
 export class PositionManager {
 
-  async get(position: Model.Position): Promise<Model.Position | null> {
+  async get(position: types.Model.Position): Promise<types.Model.Position | null> {
     const findOpt: { [Attr: string]: any } = {
       raw: true,
       where: {
@@ -121,22 +141,20 @@ export class PositionManager {
         side: position.side
       }
     };
-    if (position.mocktime) {
-      findOpt.where.mocktime = position.mocktime;
+    if (position.backtest) {
+      findOpt.where.backtest = position.backtest;
     }
-    return <Model.Position | null>await db.model.Position.find(findOpt);
+    return <types.Model.Position | null>await db.model.Position.find(findOpt);
   }
 
-  async set(position: Model.Position) {
+  async set(position: types.Model.Position) {
     // 写入数据库
     return await db.model.Position.upsert(position);
   }
 
   async remove(id: string) {
     return await db.model.Position.destroy({
-      where: {
-        id: id
-      }
+      where: { id }
     });
   }
 }
