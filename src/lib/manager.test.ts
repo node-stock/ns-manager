@@ -77,6 +77,11 @@ const testGetAsset = async (done: any) => {
 }
 
 const testBuyTrader = async (done: any) => {
+  const userId = 'test';
+  if (!await manager.asset.get(userId)) {
+    assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
+    done();
+  }
   const order: LimitOrder = {
     symbol: '6664',
     side: OrderSide.Buy,
@@ -87,7 +92,7 @@ const testBuyTrader = async (done: any) => {
     amount: 100
   };
   const account = {
-    id: 'test',
+    id: userId,
     balance: 300000
   }
   await manager.trader.set(<Account>account, order);
@@ -106,6 +111,10 @@ const testSellTrader = async (done: any) => {
     amount: 100
   };
   const account = await manager.asset.get('test');
+  if (!account) {
+    assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
+    done();
+  }
   await manager.trader.set(<Account>account, order);
   assert(true);
   done();
@@ -140,5 +149,5 @@ describe('ns-manager', () => {
   });
   after(() => {
     manager.destroy();
-  })
+  });
 });
