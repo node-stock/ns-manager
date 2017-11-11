@@ -24,6 +24,7 @@ CREATE TABLE `account` (
   `deleted_at` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='账户';
+INSERT INTO `account` VALUES ('test', '1000000', '1', null, '2017-11-11 16:18:42', null);
 
 DROP TABLE IF EXISTS `position`;
 CREATE TABLE `position` (
