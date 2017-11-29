@@ -1,27 +1,27 @@
 import * as assert from 'power-assert';
-import { OrderSide, LimitOrder, OrderType, TradeType, EventType } from 'ns-types';
-import { Manager } from './manager';
+import * as types from 'ns-types';
+import { Manager, AccountManager } from './manager';
 import { Store as db, Account } from 'ns-store';
+import { PositionManager } from '../index';
 
 const manager = new Manager();
 
-const testSetSignal = async (done: any) => {
+const testSetSignal = async () => {
   const res = await manager.signal.set({
     symbol: '6664',
-    side: OrderSide.Buy,
+    side: types.OrderSide.Buy,
     price: 2000,
     timeframe: '5min',
     notes: '备注项目'
   });
   console.log(res);
   assert(res);
-  done();
 }
 
-const testGetSignal = async (done: any) => {
+const testGetSignal = async () => {
   const findOpt = {
     symbol: '6664',
-    side: OrderSide.Buy
+    side: types.OrderSide.Buy
   };
   const signal = await manager.signal.get(findOpt);
   console.log(`where:${JSON.stringify(findOpt)} \nsignal:`, signal);
@@ -39,13 +39,12 @@ const testGetSignal = async (done: any) => {
   if (signal2) {
     assert(signal2.symbol === '6664');
   }
-  done();
 }
 
-const testRemoveSignal = async (done: any) => {
+const testRemoveSignal = async () => {
   const signal = await manager.signal.get({
     symbol: '6664',
-    side: OrderSide.Buy
+    side: types.OrderSide.Buy
   })
   assert(signal);
   if (signal && signal.id) {
@@ -53,41 +52,24 @@ const testRemoveSignal = async (done: any) => {
     console.log(res);
     assert(res);
   }
-  done();
 }
 
-const testGetAsset = async (done: any) => {
-  const res = await manager.asset.get('backtest1');
+const testGetAsset = async () => {
+  const res = await AccountManager.get('stoc');
   console.log(res)
-  /*const res = await db.model.Account.findById('test');
-  console.log('Account: ', res)
-  if (!res) {
-    await db.model.Account.upsert({
-      id: 'test',
-      balance: 300000
-    });
-  }
-  const balance = await manager.asset.getBalance('test');
-  console.log(balance);
-  assert(true);
-  const balance2 = await manager.asset.getBalance('testxxx');
-  console.log(balance2);
-  assert(balance2 === 0);*/
-  done();
 }
 
-const testBuyTrader = async (done: any) => {
+const testBuyTrader = async () => {
   const userId = 'test';
-  if (!await manager.asset.get(userId)) {
+  if (!await AccountManager.get(userId)) {
     assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
-    done();
   }
-  const order: LimitOrder = {
+  const order: types.LimitOrder = {
     symbol: '6664',
-    side: OrderSide.Buy,
-    orderType: OrderType.Limit,
-    tradeType: TradeType.Margin,
-    eventType: EventType.Order,
+    side: types.OrderSide.Buy,
+    orderType: types.OrderType.Limit,
+    tradeType: types.TradeType.Margin,
+    eventType: types.EventType.Order,
     price: 2000,
     amount: 100
   };
@@ -95,58 +77,57 @@ const testBuyTrader = async (done: any) => {
     id: userId,
     balance: 300000
   }
-  await manager.trader.set(<Account>account, order);
+  await manager.trader.set(userId, order);
   assert(true);
-  done();
 }
 
-const testSellTrader = async (done: any) => {
-  const order: LimitOrder = {
+const testSellTrader = async () => {
+  const order: types.LimitOrder = {
     symbol: '6664',
-    side: OrderSide.Sell,
-    orderType: OrderType.Limit,
-    tradeType: TradeType.Margin,
-    eventType: EventType.Order,
+    side: types.OrderSide.Sell,
+    orderType: types.OrderType.Limit,
+    tradeType: types.TradeType.Margin,
+    eventType: types.EventType.Order,
     price: 2100,
     amount: 100
   };
-  const account = await manager.asset.get('test');
+  const account = await AccountManager.get('test');
   if (!account) {
-    assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
-    done();
+    assert(false, '未查询到test账号信息！');
+    return
   }
-  await manager.trader.set(<Account>account, order);
+  await manager.trader.set(account.id, order);
   assert(true);
-  done();
+}
+
+const testSetPosition = async () => {
+  const symbol = 'C6664';
+  const accountId = 'stoc';
+  const position: types.Model.Position = {
+    account_id: accountId,
+    symbol,
+    side: types.OrderSide.Sell,
+    price: 2100,
+    quantity: 100
+  };
+  await PositionManager.set(position);
+  position.side = types.OrderSide.SellClose;
+  await PositionManager.set(position);
+  assert(true);
 }
 
 // TODO PositionManager test
 
 describe('ns-manager', () => {
-  it('存储信号', function (done) {
-    this.timeout(20000);
-    testSetSignal(done);
-  });
-  it('获取信号', function (done) {
-    this.timeout(20000);
-    testGetSignal(done);
-  });
-  it('删除信号', function (done) {
-    this.timeout(20000);
-    testRemoveSignal(done);
-  });
-  it('获取资产', function (done) {
-    this.timeout(20000);
-    testGetAsset(done);
-  });
-  it('记录买单交易', function (done) {
-    this.timeout(20000);
-    testBuyTrader(done);
-  });
-  it('记录卖单交易', function (done) {
-    this.timeout(20000);
-    testSellTrader(done);
-  });
+  /*
+  it('存储信号', testSetSignal);
+  it('获取信号', testGetSignal);
+  it('删除信号', testRemoveSignal);
+  it('记录买单交易', testBuyTrader);
+  it('记录卖单交易', testSellTrader);
+  */
+  // it('获取资产', testGetAsset);
+  it('更新持仓', testSetPosition);
   after(() => {
     manager.destroy();
   });

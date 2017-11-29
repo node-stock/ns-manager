@@ -17,9 +17,11 @@
     "prepare": "npm run rm && tsc -p tsconfig.json"
   },
   "dependencies": {
+    "moment": "^2.19.3",
     "ns-common": "0.0.11",
     "ns-store": "0.0.28",
-    "ns-types": "0.0.18"
+    "ns-types": "0.0.19",
+    "toml": "^2.3.3"
   },
   "devDependencies": {
     "@types/cheerio": "0.22.2",
