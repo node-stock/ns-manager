@@ -1,6 +1,6 @@
 {
   "name": "ns-manager",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "node-stock manager module",
   "repository": {
     "type": "git",
@@ -13,7 +13,7 @@
     "rm": "rimraf dist",
     "tsc": "npm run rm && tsc -p tsconfig.development.json",
     "tslint": "tslint --project ./tslint.json",
-    "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 3000 --require intelli-espower-loader",
+    "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 5000 --require intelli-espower-loader",
     "prepare": "npm run rm && tsc -p tsconfig.json"
   },
   "dependencies": {

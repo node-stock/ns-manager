@@ -10,7 +10,7 @@ import * as moment from 'moment';
   */
 export class SignalManager {
 
-  async get(signal: types.Model.Signal): Promise<types.Model.Signal | null> {
+  static async get(signal: types.Model.Signal): Promise<types.Model.Signal | null> {
     const findOpt = <{ [Attr: string]: any }>{
       raw: true,
       where: {
@@ -27,12 +27,12 @@ export class SignalManager {
     return <types.Model.Signal | null>await db.model.Signal.find(findOpt);
   }
 
-  async set(signal: types.Model.Signal) {
+  static async set(signal: types.Model.Signal) {
     // 写入数据库
     return await db.model.Signal.upsert(signal);
   }
 
-  async remove(id: string) {
+  static async remove(id: string) {
     return await db.model.Signal.destroy({
       where: { id }
     });
@@ -70,7 +70,7 @@ export class AccountManager {
   */
 export class TraderManager {
 
-  async set(accountId: string, order: types.LimitOrder) {
+  static async set(accountId: string, order: types.LimitOrder) {
     Log.system.info('记录交易信息[启动]');
 
     // 获取当前账户资产信息
@@ -84,17 +84,13 @@ export class TraderManager {
     Log.system.info('保存交易记录');
     await db.model.Transaction.upsert(order);
 
+    // 更新持仓
     const position: types.Model.Position = Object.assign({}, order, {
       quantity: order.amount
     });
+    await PositionManager.set(position);
 
     Log.system.info('记录交易信息[终了]');
-  }
-
-  async remove(id: string) {
-    return await db.model.Signal.destroy({
-      where: { id }
-    });
   }
 }
 
@@ -244,26 +240,5 @@ export class PositionManager {
     return await db.model.Position.destroy({
       where: { id }
     });
-  }
-}
-
-/**
-  * @class
-  * @classdesc 综合管理器
-  */
-export class Manager {
-  signal: SignalManager;
-  account: AccountManager;
-  trader: TraderManager;
-  position: PositionManager;
-  constructor() {
-    db.init(require('config').store);
-    this.signal = new SignalManager();
-    this.account = new AccountManager();
-    this.trader = new TraderManager();
-    this.position = new PositionManager();
-  }
-  destroy() {
-    db.close();
   }
 }

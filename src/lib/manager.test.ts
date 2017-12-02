@@ -1,13 +1,11 @@
 import * as assert from 'power-assert';
 import * as types from 'ns-types';
-import { Manager, AccountManager } from './manager';
+import { TraderManager, SignalManager } from './manager';
+import { PositionManager, AccountManager } from './manager';
 import { Store as db, Account } from 'ns-store';
-import { PositionManager } from '../index';
-
-const manager = new Manager();
 
 const testSetSignal = async () => {
-  const res = await manager.signal.set({
+  const res = await SignalManager.set({
     symbol: '6664',
     side: types.OrderSide.Buy,
     price: 2000,
@@ -23,7 +21,7 @@ const testGetSignal = async () => {
     symbol: '6664',
     side: types.OrderSide.Buy
   };
-  const signal = await manager.signal.get(findOpt);
+  const signal = await SignalManager.get(findOpt);
   console.log(`where:${JSON.stringify(findOpt)} \nsignal:`, signal);
   assert(signal);
   if (signal) {
@@ -33,7 +31,7 @@ const testGetSignal = async () => {
   const findOpt2 = {
     symbol: '6664'
   };
-  const signal2 = await manager.signal.get(findOpt2);
+  const signal2 = await SignalManager.get(findOpt2);
   console.log(`\nwhere:${JSON.stringify(findOpt2)} \nsignal:`, signal2);
   assert(signal2);
   if (signal2) {
@@ -42,13 +40,13 @@ const testGetSignal = async () => {
 }
 
 const testRemoveSignal = async () => {
-  const signal = await manager.signal.get({
+  const signal = await SignalManager.get({
     symbol: '6664',
     side: types.OrderSide.Buy
   })
   assert(signal);
   if (signal && signal.id) {
-    const res = await manager.signal.remove(signal.id);
+    const res = await SignalManager.remove(signal.id);
     console.log(res);
     assert(res);
   }
@@ -77,7 +75,7 @@ const testBuyTrader = async () => {
     id: userId,
     balance: 300000
   }
-  await manager.trader.set(userId, order);
+  await TraderManager.set(userId, order);
   assert(true);
 }
 
@@ -96,22 +94,54 @@ const testSellTrader = async () => {
     assert(false, '未查询到test账号信息！');
     return
   }
-  await manager.trader.set(account.id, order);
+  await TraderManager.set(account.id, order);
   assert(true);
 }
 
 const testSetPosition = async () => {
-  const symbol = 'C6664';
+  const symbol = 'M6664';
   const accountId = 'stoc';
+  // 建立多仓
   const position: types.Model.Position = {
     account_id: accountId,
     symbol,
-    side: types.OrderSide.Sell,
+    side: types.OrderSide.Buy,
     price: 2100,
     quantity: 100
   };
   await PositionManager.set(position);
+  // 平空仓
   position.side = types.OrderSide.SellClose;
+  await PositionManager.set(position);
+  // 建立空仓
+  position.side = types.OrderSide.Sell;
+  await PositionManager.set(position);
+  // 建立空仓
+  position.side = types.OrderSide.Sell;
+  await PositionManager.set(position);
+  // 平空仓
+  position.side = types.OrderSide.SellClose;
+  await PositionManager.set(position);
+  // 平多仓
+  position.side = types.OrderSide.BuyClose;
+  await PositionManager.set(position);
+  // 平空仓
+  position.side = types.OrderSide.SellClose;
+  await PositionManager.set(position);
+  // 平多仓
+  position.side = types.OrderSide.BuyClose;
+  await PositionManager.set(position);
+  // 建立多仓
+  position.side = types.OrderSide.Buy;
+  await PositionManager.set(position);
+  // 建立多仓
+  position.side = types.OrderSide.Buy;
+  await PositionManager.set(position);
+  // 建立多仓
+  position.side = types.OrderSide.Buy;
+  await PositionManager.set(position);
+  // 平多仓
+  position.side = types.OrderSide.BuyClose;
   await PositionManager.set(position);
   assert(true);
 }
@@ -119,16 +149,19 @@ const testSetPosition = async () => {
 // TODO PositionManager test
 
 describe('ns-manager', () => {
-  /*
+  before(async () => {
+    await db.init(require('config').store);
+  });
+
   it('存储信号', testSetSignal);
   it('获取信号', testGetSignal);
   it('删除信号', testRemoveSignal);
   it('记录买单交易', testBuyTrader);
   it('记录卖单交易', testSellTrader);
-  */
-  // it('获取资产', testGetAsset);
+
+  it('获取资产', testGetAsset);
   it('更新持仓', testSetPosition);
-  after(() => {
-    manager.destroy();
+  after(async () => {
+    await db.close();
   });
 });
