@@ -82,7 +82,11 @@ export class TraderManager {
 
     // 保存交易记录
     Log.system.info('保存交易记录');
-    await db.model.Transaction.upsert(order);
+    const transaction: types.Model.Transaction = Object.assign({}, order, {
+      account_id: accountId,
+      quantity: order.amount
+    });
+    await db.model.Transaction.upsert(transaction);
 
     // 更新持仓
     const position: types.Model.Position = Object.assign({}, order, {
@@ -167,18 +171,11 @@ export class PositionManager {
         // 更新账户资金 = 当前余额 + (股价*股数) - 买卖手续费
         account.balance = <number>account.balance + closeTotal - fee * 2;
 
-        const earning: types.Model.Earning = {
-          account_id: String(position.account_id),
-          symbol: position.symbol,
-          side: position.side,
-          mocktime: position.mocktime,
-          backtest: position.backtest,
-          quantity: position.quantity,
+        const earning: types.Model.Earning = Object.assign({}, position, {
           profit: openTotal - closeTotal,
           open: updPosition.price,
-          close: position.price,
           fee
-        };
+        });
         // 记录收益
         await db.model.Earning.upsert(earning);
       } else if (position.side === types.OrderSide.Buy) { // 多单
@@ -215,18 +212,11 @@ export class PositionManager {
         // 更新账户资金 = 当前余额 + (股价*股数) - 买卖手续费
         account.balance = <number>account.balance + closeTotal - fee * 2;
 
-        const earning: types.Model.Earning = {
-          account_id: String(position.account_id),
-          symbol: position.symbol,
-          side: position.side,
-          mocktime: position.mocktime,
-          backtest: position.backtest,
-          quantity: position.quantity,
+        const earning: types.Model.Earning = Object.assign({}, position, {
           profit,
           open: updPosition.price,
-          close: position.price,
           fee
-        };
+        });
         // 记录收益
         await db.model.Earning.upsert(earning);
       } else if (position.side === types.OrderSide.Sell) { // 空单
