@@ -172,7 +172,7 @@ export class PositionManager {
         account.balance = <number>account.balance + closeTotal - fee * 2;
 
         const earning: types.Model.Earning = Object.assign({}, position, {
-          profit: openTotal - closeTotal,
+          profit,
           open: updPosition.price,
           close: position.price,
           fee
