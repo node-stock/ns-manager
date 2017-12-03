@@ -100,7 +100,7 @@ const testSellTrader = async () => {
 
 const testSetPosition = async () => {
   const symbol = 'M6664';
-  const accountId = 'stoc';
+  const accountId = 'test';
   // 建立多仓
   const position: types.Model.Position = {
     account_id: accountId,
@@ -112,36 +112,47 @@ const testSetPosition = async () => {
   await PositionManager.set(position);
   // 平空仓
   position.side = types.OrderSide.SellClose;
+  position.price = 2200;
   await PositionManager.set(position);
   // 建立空仓
   position.side = types.OrderSide.Sell;
+  position.price = 2120;
   await PositionManager.set(position);
   // 建立空仓
   position.side = types.OrderSide.Sell;
+  position.price = 2000;
   await PositionManager.set(position);
   // 平空仓
   position.side = types.OrderSide.SellClose;
+  position.price = 1900;
   await PositionManager.set(position);
   // 平多仓
   position.side = types.OrderSide.BuyClose;
+  position.price = 2250;
   await PositionManager.set(position);
   // 平空仓
   position.side = types.OrderSide.SellClose;
+  position.price = 2300;
   await PositionManager.set(position);
   // 平多仓
   position.side = types.OrderSide.BuyClose;
+  position.price = 2400;
   await PositionManager.set(position);
   // 建立多仓
   position.side = types.OrderSide.Buy;
+  position.price = 2100;
   await PositionManager.set(position);
   // 建立多仓
   position.side = types.OrderSide.Buy;
+  position.price = 2120;
   await PositionManager.set(position);
   // 建立多仓
   position.side = types.OrderSide.Buy;
+  position.price = 2230;
   await PositionManager.set(position);
   // 平多仓
   position.side = types.OrderSide.BuyClose;
+  position.price = 2320;
   await PositionManager.set(position);
   assert(true);
 }

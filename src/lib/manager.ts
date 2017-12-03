@@ -157,8 +157,29 @@ export class PositionManager {
         }
         // 更新数量
         updPosition.quantity = <number>updPosition.quantity - Number(position.quantity);
-        // 更新账户资金 = 当前余额 + (股价*股数) - 手续费
-        account.balance = <number>account.balance + <number>position.price * <number>position.quantity + fee
+        // 平仓总价
+        const closeTotal = <number>position.price * <number>position.quantity;
+        // 开仓总价
+        const openTotal = <number>updPosition.price * <number>position.quantity;
+        // 收益 = 平仓总价 - 开仓总价 - 买卖手续费
+        const profit = closeTotal - openTotal - fee * 2;
+        // 更新账户资金 = 当前余额 + (股价*股数) - 买卖手续费
+        account.balance = <number>account.balance + closeTotal - fee * 2;
+
+        const earning: types.Model.Earning = {
+          account_id: String(position.account_id),
+          symbol: position.symbol,
+          side: position.side,
+          mocktime: position.mocktime,
+          backtest: position.backtest,
+          quantity: position.quantity,
+          profit: openTotal - closeTotal,
+          open: updPosition.price,
+          close: position.price,
+          fee
+        };
+        // 记录收益
+        await db.model.Earning.upsert(earning);
       } else if (position.side === types.OrderSide.Buy) { // 多单
         updPosition = updPositions.find((posi) => {
           return posi.side === types.OrderSide.Buy;
@@ -184,8 +205,29 @@ export class PositionManager {
         }
         // 更新数量
         updPosition.quantity = <number>updPosition.quantity - <number>position.quantity;
-        // 更新账户资金 = 当前余额 + (股价*股数) - 手续费
-        account.balance = <number>account.balance + (<number>position.price * <number>position.quantity) - fee
+        // 平仓总价
+        const closeTotal = <number>position.price * <number>position.quantity;
+        // 开仓总价
+        const openTotal = <number>updPosition.price * <number>position.quantity;
+        // 收益 = 平仓总价 - 开仓总价 - 买卖手续费
+        const profit = closeTotal - openTotal - fee * 2;
+        // 更新账户资金 = 当前余额 + (股价*股数) - 买卖手续费
+        account.balance = <number>account.balance + closeTotal - fee * 2;
+
+        const earning: types.Model.Earning = {
+          account_id: String(position.account_id),
+          symbol: position.symbol,
+          side: position.side,
+          mocktime: position.mocktime,
+          backtest: position.backtest,
+          quantity: position.quantity,
+          profit,
+          open: updPosition.price,
+          close: position.price,
+          fee
+        };
+        // 记录收益
+        await db.model.Earning.upsert(earning);
       } else if (position.side === types.OrderSide.Sell) { // 空单
         updPosition = updPositions.find((posi) => {
           return posi.side === types.OrderSide.Sell;
