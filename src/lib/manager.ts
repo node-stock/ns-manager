@@ -10,7 +10,7 @@ import * as moment from 'moment';
   */
 export class SignalManager {
 
-  static async get(signal: types.Model.Signal): Promise<types.Model.Signal | null> {
+  async get(signal: types.Model.Signal): Promise<types.Model.Signal | null> {
     const findOpt = <{ [Attr: string]: any }>{
       raw: true,
       where: {
@@ -27,12 +27,12 @@ export class SignalManager {
     return <types.Model.Signal | null>await db.model.Signal.find(findOpt);
   }
 
-  static async set(signal: types.Model.Signal) {
+  async set(signal: types.Model.Signal) {
     // 写入数据库
     return await db.model.Signal.upsert(signal);
   }
 
-  static async remove(id: string) {
+  async remove(id: string) {
     return await db.model.Signal.destroy({
       where: { id }
     });
@@ -44,54 +44,27 @@ export class SignalManager {
   * @classdesc 资产管理器
   */
 export class AccountManager {
-
-  static async get(accountId: string): Promise<types.Model.Account | undefined> {
-    const account = <types.Model.Account | undefined>await db.model.Account.findById(accountId, {
-      raw: true
-    });
-    if (account) {
-      const positions = await db.model.Position.findAll({
-        raw: true,
-        where: {
-          account_id: accountId
-        }
-      });
-      if (positions) {
-        account.positions = <Position[]>positions;
-      }
-    }
-    return account;
+  async get(accountId: string): Promise<types.Model.Account | undefined> {
+    return getAccountInfo(accountId);
   }
 }
 
-/**
-  * @class
-  * @classdesc 交易管理器
-  */
-export class TraderManager {
-
-  static async set(accountId: string, order: types.LimitOrder) {
-    Log.system.info('记录交易信息[启动]');
-
-    // 获取当前账户资产信息
-    const account = await AccountManager.get(accountId);
-    if (!account) {
-      Log.system.error('获取当前账户资产信息为空！');
-      return null;
-    }
-
-    // 保存交易记录
-    Log.system.info('保存交易记录');
-    await db.model.Transaction.upsert(order);
-
-    // 更新持仓
-    const position: types.Model.Position = Object.assign({}, order, {
-      quantity: order.amount
+const getAccountInfo = async (accountId: string): Promise<types.Model.Account | undefined> => {
+  const account = <types.Model.Account | undefined>await db.model.Account.findById(accountId, {
+    raw: true
+  });
+  if (account) {
+    const positions = await db.model.Position.findAll({
+      raw: true,
+      where: {
+        account_id: accountId
+      }
     });
-    await PositionManager.set(position);
-
-    Log.system.info('记录交易信息[终了]');
+    if (positions) {
+      account.positions = <Position[]>positions;
+    }
   }
+  return account;
 }
 
 /**
@@ -100,7 +73,7 @@ export class TraderManager {
   */
 export class PositionManager {
 
-  static async get(position: types.Model.Position): Promise<types.Model.Position | null> {
+  async get(position: types.Model.Position): Promise<types.Model.Position | null> {
     const findOpt: { [Attr: string]: any } = {
       raw: true,
       where: {
@@ -121,11 +94,11 @@ export class PositionManager {
    * @param position  待更新(新增)持仓
    * @param account 账户情报，当调用层已获得account时，此对象不为空
    */
-  static async set(position: types.Model.Position, account?: types.Model.Account) {
+  async set(position: types.Model.Position, account?: types.Model.Account) {
     Log.system.info('更新(新增)持仓[启动]');
     if (!account) {
       Log.system.info(`未传入账户信息，通过持仓对象的账户ID：${position.account_id}查找`);
-      account = await AccountManager.get(<string>position.account_id);
+      account = await getAccountInfo(<string>position.account_id);
       if (!account) {
         Log.system.error('账户信息为空，更新(新增)持仓[异常终了]');
         return;
@@ -278,7 +251,7 @@ export class PositionManager {
     Log.system.info('更新(新增)持仓[终了]');
   }
 
-  static async remove(id: string) {
+  async remove(id: string) {
     return await db.model.Position.destroy({
       where: { id }
     });
@@ -290,10 +263,49 @@ export class PositionManager {
   * @classdesc 综合管理器
   */
 export class Manager {
-  static async init() {
+  signal: SignalManager;
+  account: AccountManager;
+  position: PositionManager;
+
+  constructor() {
+    this.signal = new SignalManager();
+    this.account = new AccountManager();
+    this.position = new PositionManager();
+  }
+  async init() {
     await db.init(require('config').store);
   }
-  static async destroy() {
+
+  /**
+   * 记录交易信息
+   *
+   * @param accountId 用户id
+   * @param order 订单信息
+   */
+  async saveTrade(accountId: string, order: types.LimitOrder) {
+    Log.system.info('记录交易信息[启动]');
+
+    // 获取当前账户资产信息
+    const account = this.account.get(accountId);
+    if (!account) {
+      Log.system.error('获取当前账户资产信息为空！');
+      return null;
+    }
+
+    // 保存交易记录
+    Log.system.info('保存交易记录');
+    await db.model.Transaction.upsert(order);
+
+    // 更新持仓
+    const position: types.Model.Position = Object.assign({}, order, {
+      quantity: order.amount
+    });
+    await this.position.set(position);
+
+    Log.system.info('记录交易信息[终了]');
+  }
+
+  async destroy() {
     await db.close();
   }
 }
