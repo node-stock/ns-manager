@@ -284,3 +284,16 @@ export class PositionManager {
     });
   }
 }
+
+/**
+  * @class
+  * @classdesc 综合管理器
+  */
+export class Manager {
+  static async init() {
+    await db.init(require('config').store);
+  }
+  static async destroy() {
+    await db.close();
+  }
+}

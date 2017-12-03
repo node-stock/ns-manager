@@ -1,6 +1,6 @@
 import * as assert from 'power-assert';
 import * as types from 'ns-types';
-import { TraderManager, SignalManager } from './manager';
+import { Manager, TraderManager, SignalManager } from './manager';
 import { PositionManager, AccountManager } from './manager';
 import { Store as db, Account } from 'ns-store';
 
@@ -161,7 +161,7 @@ const testSetPosition = async () => {
 
 describe('ns-manager', () => {
   before(async () => {
-    await db.init(require('config').store);
+    await Manager.init();
   });
 
   it('存储信号', testSetSignal);
@@ -173,6 +173,6 @@ describe('ns-manager', () => {
   it('获取资产', testGetAsset);
   it('更新持仓', testSetPosition);
   after(async () => {
-    await db.close();
+    await Manager.destroy();
   });
 });
