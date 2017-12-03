@@ -174,6 +174,7 @@ export class PositionManager {
         const earning: types.Model.Earning = Object.assign({}, position, {
           profit: openTotal - closeTotal,
           open: updPosition.price,
+          close: position.price,
           fee
         });
         // 记录收益
@@ -215,6 +216,7 @@ export class PositionManager {
         const earning: types.Model.Earning = Object.assign({}, position, {
           profit,
           open: updPosition.price,
+          close: position.price,
           fee
         });
         // 记录收益
