@@ -175,7 +175,7 @@ export class PositionManager {
           profit,
           open: updPosition.price,
           close: position.price,
-          fee
+          fee: fee * 2
         });
         // 记录收益
         await db.model.Earning.upsert(earning);
@@ -217,7 +217,7 @@ export class PositionManager {
           profit,
           open: updPosition.price,
           close: position.price,
-          fee
+          fee: fee * 2
         });
         // 记录收益
         await db.model.Earning.upsert(earning);
