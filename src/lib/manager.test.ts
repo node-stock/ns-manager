@@ -1,12 +1,11 @@
 import * as assert from 'power-assert';
 import * as types from 'ns-types';
-import { Manager } from './manager';
+import { TraderManager, SignalManager } from './manager';
+import { PositionManager, AccountManager } from './manager';
 import { Store as db, Account } from 'ns-store';
 
-const manager = new Manager();
-
 const testSetSignal = async () => {
-  const res = await manager.signal.set({
+  const res = await SignalManager.set({
     symbol: '6664',
     side: types.OrderSide.Buy,
     price: 2000,
@@ -22,7 +21,7 @@ const testGetSignal = async () => {
     symbol: '6664',
     side: types.OrderSide.Buy
   };
-  const signal = await manager.signal.get(findOpt);
+  const signal = await SignalManager.get(findOpt);
   console.log(`where:${JSON.stringify(findOpt)} \nsignal:`, signal);
   assert(signal);
   if (signal) {
@@ -32,7 +31,7 @@ const testGetSignal = async () => {
   const findOpt2 = {
     symbol: '6664'
   };
-  const signal2 = await manager.signal.get(findOpt2);
+  const signal2 = await SignalManager.get(findOpt2);
   console.log(`\nwhere:${JSON.stringify(findOpt2)} \nsignal:`, signal2);
   assert(signal2);
   if (signal2) {
@@ -41,26 +40,26 @@ const testGetSignal = async () => {
 }
 
 const testRemoveSignal = async () => {
-  const signal = await manager.signal.get({
+  const signal = await SignalManager.get({
     symbol: '6664',
     side: types.OrderSide.Buy
   })
   assert(signal);
   if (signal && signal.id) {
-    const res = await manager.signal.remove(signal.id);
+    const res = await SignalManager.remove(signal.id);
     console.log(res);
     assert(res);
   }
 }
 
 const testGetAsset = async () => {
-  const res = await manager.account.get('stoc');
+  const res = await AccountManager.get('stoc');
   console.log(res)
 }
 
 const testBuyTrader = async () => {
   const userId = 'test';
-  if (!await manager.account.get(userId)) {
+  if (!await AccountManager.get(userId)) {
     assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
   }
   const order: types.LimitOrder = {
@@ -72,7 +71,11 @@ const testBuyTrader = async () => {
     price: 2000,
     amount: 100
   };
-  await manager.saveTrade(userId, order);
+  const account = {
+    id: userId,
+    balance: 300000
+  }
+  await TraderManager.set(userId, order);
   assert(true);
 }
 
@@ -86,12 +89,12 @@ const testSellTrader = async () => {
     price: 2100,
     amount: 100
   };
-  const account = await manager.account.get('test');
+  const account = await AccountManager.get('test');
   if (!account) {
     assert(false, '未查询到test账号信息！');
     return
   }
-  await manager.saveTrade(account.id, order);
+  await TraderManager.set(account.id, order);
   assert(true);
 }
 
@@ -106,57 +109,57 @@ const testSetPosition = async () => {
     price: 2100,
     quantity: 100
   };
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 平空仓
   position.side = types.OrderSide.SellClose;
   position.price = 2200;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 建立空仓
   position.side = types.OrderSide.Sell;
   position.price = 2120;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 建立空仓
   position.side = types.OrderSide.Sell;
   position.price = 2000;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 平空仓
   position.side = types.OrderSide.SellClose;
   position.price = 1900;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 平多仓
   position.side = types.OrderSide.BuyClose;
   position.price = 2250;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 平空仓
   position.side = types.OrderSide.SellClose;
   position.price = 2300;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 平多仓
   position.side = types.OrderSide.BuyClose;
   position.price = 2400;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 建立多仓
   position.side = types.OrderSide.Buy;
   position.price = 2100;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 建立多仓
   position.side = types.OrderSide.Buy;
   position.price = 2120;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 建立多仓
   position.side = types.OrderSide.Buy;
   position.price = 2230;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   // 平多仓
   position.side = types.OrderSide.BuyClose;
   position.price = 2320;
-  await manager.position.set(position);
+  await PositionManager.set(position);
   assert(true);
 }
 
 describe('ns-manager', () => {
   before(async () => {
-    await manager.init();
+    await db.init(require('config').store);
   });
 
   it('存储信号', testSetSignal);
@@ -168,6 +171,6 @@ describe('ns-manager', () => {
   it('获取资产', testGetAsset);
   it('更新持仓', testSetPosition);
   after(async () => {
-    await manager.destroy();
+    await db.close();
   });
 });

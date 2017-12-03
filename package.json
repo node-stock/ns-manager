@@ -1,6 +1,6 @@
 {
   "name": "ns-manager",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "description": "node-stock manager module",
   "repository": {
     "type": "git",
