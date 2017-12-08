@@ -157,6 +157,12 @@ const testSetPosition = async () => {
   assert(true);
 }
 
+const testGetAllAsset = async () => {
+  const res = await AccountManager.getAll();
+  console.log(res)
+}
+
+
 describe('ns-manager', () => {
   before(async () => {
     await db.init(require('config').store);
@@ -168,8 +174,11 @@ describe('ns-manager', () => {
   it('记录买单交易', testBuyTrader);
   it('记录卖单交易', testSellTrader);
 
-  it('获取资产', testGetAsset);
   it('更新持仓', testSetPosition);
+
+  it('获取资产', testGetAsset);
+  it('获取全部用户资产', testGetAllAsset);
+
   after(async () => {
     await db.close();
   });

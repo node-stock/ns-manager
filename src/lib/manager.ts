@@ -2,6 +2,7 @@ import { Store as db, Position, Account } from 'ns-store';
 import * as types from 'ns-types';
 import { Log } from 'ns-common';
 import * as moment from 'moment';
+import { Sequelize } from 'sequelize-typescript';
 // process.env.NODE_ENV = 'development';
 
 /**
@@ -56,11 +57,31 @@ export class AccountManager {
           account_id: accountId
         }
       });
-      if (positions) {
+      if (positions && positions.length > 0) {
         account.positions = <Position[]>positions;
       }
     }
     return account;
+  }
+
+  static async getAll(): Promise<types.Model.Account[] | undefined> {
+    const accountList = <types.Model.Account[] | undefined>await db.model.Account.findAll({ raw: true });
+    if (accountList && accountList.length > 0) {
+      const accountIds: string[] = [];
+      accountList.forEach((account) => {
+        accountIds.push(account.id);
+      })
+      const positions = <Position[] | undefined>await db.model.Position.findAll({ raw: true });
+      if (positions && positions.length > 0) {
+        accountList.forEach((account) => {
+          const accPosiList = positions.filter((posi) => {
+            return posi.account_id === account.id;
+          });
+          account.positions = accPosiList;
+        })
+      }
+      return accountList;
+    }
   }
 }
 
