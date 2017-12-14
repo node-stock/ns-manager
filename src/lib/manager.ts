@@ -22,8 +22,8 @@ export class SignalManager {
       findOpt.where.side = signal.side;
     }
     if (signal.backtest) {
-      findOpt.raw.where.backtest = signal.backtest;
-      findOpt.raw.where.mocktime = signal.mocktime;
+      findOpt.where.backtest = signal.backtest;
+      findOpt.where.mocktime = signal.mocktime;
     }
     return <types.Model.Signal | null>await db.model.Signal.find(findOpt);
   }
