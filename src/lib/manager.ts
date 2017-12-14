@@ -23,7 +23,7 @@ export class SignalManager {
     }
     if (signal.backtest) {
       findOpt.where.backtest = signal.backtest;
-      findOpt.where.mocktime = signal.mocktime;
+      // findOpt.where.mocktime = signal.mocktime;
     }
     return <types.Model.Signal | null>await db.model.Signal.find(findOpt);
   }
