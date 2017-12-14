@@ -151,7 +151,7 @@ export class PositionManager {
     Log.system.info('更新(新增)持仓[启动]');
     if (!account) {
       Log.system.info(`未传入账户信息，通过持仓对象的账户ID：${position.account_id}查找`);
-      account = await AccountManager.get(<string>position.account_id);
+      account = await AccountManager.get(String(position.account_id));
       if (!account) {
         Log.system.error('账户信息为空，更新(新增)持仓[异常终了]');
         return;
@@ -182,15 +182,15 @@ export class PositionManager {
           return;
         }
         // 更新数量
-        updPosition.quantity = <number>updPosition.quantity - Number(position.quantity);
+        updPosition.quantity = Number(updPosition.quantity) - Number(position.quantity);
         // 平仓总价
-        const closeTotal = <number>position.price * <number>position.quantity;
+        const closeTotal = Number(position.price) * Number(position.quantity);
         // 开仓总价
-        const openTotal = <number>updPosition.price * <number>position.quantity;
+        const openTotal = Number(updPosition.price) * Number(position.quantity);
         // 收益 = 平仓总价 - 开仓总价 - 买卖手续费
         const profit = closeTotal - openTotal - fee * 2;
         // 更新账户资金 = 当前余额 + (股价*股数) - 买卖手续费
-        account.balance = <number>account.balance + closeTotal - fee * 2;
+        account.balance = Number(account.balance) + closeTotal - fee * 2;
 
         const earning: types.Model.Earning = Object.assign({}, position, {
           profit,
@@ -211,10 +211,10 @@ export class PositionManager {
             updated_at: null
           });
           // 更新数量
-          updPosition.quantity = <number>updPosition.quantity + <number>position.quantity;
+          updPosition.quantity = Number(updPosition.quantity) + Number(position.quantity);
         }
         // 更新账户资金 = 当前余额 - (股价*股数) - 手续费
-        account.balance = <number>account.balance - (<number>position.price * <number>position.quantity) - fee
+        account.balance = Number(account.balance) - (Number(position.price) * Number(position.quantity)) - fee
       } else if (position.side === types.OrderSide.SellClose) { // 平空
         updPosition = updPositions.find((posi) => {
           return posi.side === types.OrderSide.Sell;
@@ -224,15 +224,15 @@ export class PositionManager {
           return;
         }
         // 更新数量
-        updPosition.quantity = <number>updPosition.quantity - <number>position.quantity;
+        updPosition.quantity = Number(updPosition.quantity) - Number(position.quantity);
         // 平仓总价
-        const closeTotal = <number>position.price * <number>position.quantity;
+        const closeTotal = Number(position.price) * Number(position.quantity);
         // 开仓总价
-        const openTotal = <number>updPosition.price * <number>position.quantity;
+        const openTotal = Number(updPosition.price) * Number(position.quantity);
         // 收益 = 平仓总价 - 开仓总价 - 买卖手续费
         const profit = closeTotal - openTotal - fee * 2;
         // 更新账户资金 = 当前余额 + (股价*股数) - 买卖手续费
-        account.balance = <number>account.balance + closeTotal - fee * 2;
+        account.balance = Number(account.balance) + closeTotal - fee * 2;
 
         const earning: types.Model.Earning = Object.assign({}, position, {
           profit,
@@ -252,10 +252,10 @@ export class PositionManager {
             updated_at: null
           });
           // 更新数量
-          updPosition.quantity = <number>updPosition.quantity + <number>position.quantity;
+          updPosition.quantity = Number(updPosition.quantity) + Number(position.quantity);
         }
         // 更新账户资金 = 当前余额 - (股价*股数) - 手续费
-        account.balance = <number>account.balance - (<number>position.price * <number>position.quantity) - fee
+        account.balance = Number(account.balance) - (Number(position.price) * Number(position.quantity)) - fee
       }
       // 更新对象不为空 && 持仓数量为零
       if (updPosition && updPosition.quantity === 0) {
