@@ -29,6 +29,11 @@ export class SignalManager {
   }
 
   static async set(signal: types.Model.Signal) {
+    const dbSignal = await this.get(signal);
+    // 数据库中存在数据时，删除已存信号
+    if (dbSignal) {
+      await this.remove(String(dbSignal.id));
+    }
     // 写入数据库
     return await db.model.Signal.upsert(signal);
   }

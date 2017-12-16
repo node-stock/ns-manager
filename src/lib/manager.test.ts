@@ -12,8 +12,22 @@ const testSetSignal = async () => {
     timeframe: '5min',
     notes: '备注项目'
   });
-  console.log(res);
-  assert(res);
+  assert(res === true);
+  await SignalManager.set({
+    symbol: '6664',
+    side: types.OrderSide.Buy,
+    price: 2001,
+    timeframe: '5min',
+    notes: '备注项目'
+  });
+  await SignalManager.set({
+    symbol: '6664',
+    side: types.OrderSide.Sell,
+    price: 2001,
+    timeframe: '5min',
+    notes: '备注项目'
+  });
+
 }
 
 const testGetSignal = async () => {
@@ -161,7 +175,6 @@ const testGetAllAsset = async () => {
   const res = await AccountManager.getAll();
   console.log(res)
 }
-
 
 describe('ns-manager', () => {
   before(async () => {
