@@ -171,6 +171,21 @@ const testSetPosition = async () => {
   assert(true);
 }
 
+const testSetCoinPosition = async () => {
+  const symbol = 'bcc_jpy';
+  const accountId = 'coin';
+  // 建立多仓
+  const position: types.Model.Position = {
+    account_id: accountId,
+    symbol,
+    side: types.OrderSide.BuyClose,
+    price: 204897,
+    quantity: 0.01
+  };
+  await PositionManager.set(position);
+  assert(true);
+}
+
 const testGetAllAsset = async () => {
   const res = await AccountManager.getAll();
   console.log(res)
@@ -181,16 +196,17 @@ describe('ns-manager', () => {
     await db.init(require('config').store);
   });
 
-  it('存储信号', testSetSignal);
+  /*it('存储信号', testSetSignal);
   it('获取信号', testGetSignal);
   it('删除信号', testRemoveSignal);
   it('记录买单交易', testBuyTrader);
   it('记录卖单交易', testSellTrader);
 
-  it('更新持仓', testSetPosition);
-
   it('获取资产', testGetAsset);
   it('获取全部用户资产', testGetAllAsset);
+
+  it('更新持仓', testSetPosition);*/
+  it('更新数字货币持仓', testSetCoinPosition);
 
   after(async () => {
     await db.close();

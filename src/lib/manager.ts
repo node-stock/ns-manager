@@ -1,6 +1,6 @@
 import { Store as db, Position, Account } from 'ns-store';
 import * as types from 'ns-types';
-import { Log } from 'ns-common';
+import { Log, Util } from 'ns-common';
 import * as moment from 'moment';
 import { Sequelize } from 'sequelize-typescript';
 // process.env.NODE_ENV = 'development';
@@ -119,7 +119,7 @@ export class TraderManager {
       account_id: accountId,
       quantity: order.amount
     });
-    await PositionManager.set(position);
+    await PositionManager.set(position, account);
 
     Log.system.info('记录交易信息[终了]');
   }
@@ -172,7 +172,9 @@ export class PositionManager {
     }
     Log.system.info(`股票(${position.symbol})的持仓:${JSON.stringify(updPositions)}`);
     // 默认手续费
-    const fee = 500;
+    const fee = Util.getFee(position.symbol);
+    // 查询是否使用比特币余额交易
+    const useBitcoin = Util.getTradeUnit(position.symbol).type === 'btc' ? true : false;
     // 待更新对象
     let updPosition: types.Model.Position | undefined;
     // 查到持仓
@@ -195,7 +197,11 @@ export class PositionManager {
         // 收益 = 平仓总价 - 开仓总价 - 买卖手续费
         const profit = closeTotal - openTotal - fee * 2;
         // 更新账户资金 = 当前余额 + (股价*股数) - 买卖手续费
-        account.balance = Number(account.balance) + closeTotal - fee * 2;
+        if (useBitcoin) {
+          account.bitcoin = Number(account.bitcoin) + closeTotal - fee * 2;
+        } else {
+          account.balance = Number(account.balance) + closeTotal - fee * 2;
+        }
 
         const earning: types.Model.Earning = Object.assign({}, position, {
           profit,
@@ -219,7 +225,13 @@ export class PositionManager {
           updPosition.quantity = Number(updPosition.quantity) + Number(position.quantity);
         }
         // 更新账户资金 = 当前余额 - (股价*股数) - 手续费
-        account.balance = Number(account.balance) - (Number(position.price) * Number(position.quantity)) - fee
+        if (useBitcoin) {
+          account.bitcoin = Number(account.bitcoin) -
+            (Number(position.price) * Number(position.quantity)) - fee;
+        } else {
+          account.balance = Number(account.balance) -
+            (Number(position.price) * Number(position.quantity)) - fee;
+        }
       } else if (position.side === types.OrderSide.SellClose) { // 平空
         updPosition = updPositions.find((posi) => {
           return posi.side === types.OrderSide.Sell;
@@ -237,7 +249,11 @@ export class PositionManager {
         // 收益 = 平仓总价 - 开仓总价 - 买卖手续费
         const profit = closeTotal - openTotal - fee * 2;
         // 更新账户资金 = 当前余额 + (股价*股数) - 买卖手续费
-        account.balance = Number(account.balance) + closeTotal - fee * 2;
+        if (useBitcoin) {
+          account.bitcoin = Number(account.bitcoin) + closeTotal - fee * 2;
+        } else {
+          account.balance = Number(account.balance) + closeTotal - fee * 2;
+        }
 
         const earning: types.Model.Earning = Object.assign({}, position, {
           profit,
@@ -260,7 +276,13 @@ export class PositionManager {
           updPosition.quantity = Number(updPosition.quantity) + Number(position.quantity);
         }
         // 更新账户资金 = 当前余额 - (股价*股数) - 手续费
-        account.balance = Number(account.balance) - (Number(position.price) * Number(position.quantity)) - fee
+        if (useBitcoin) {
+          account.bitcoin = Number(account.bitcoin) -
+            (Number(position.price) * Number(position.quantity)) - fee;
+        } else {
+          account.balance = Number(account.balance) -
+            (Number(position.price) * Number(position.quantity)) - fee;
+        }
       }
       // 更新对象不为空 && 持仓数量为零
       if (updPosition && updPosition.quantity === 0) {
@@ -286,6 +308,15 @@ export class PositionManager {
         await db.model.Account.upsert(account);
         Log.system.info('更新(新增)持仓[终了]');
         return;
+      }
+    } else {
+      // 更新账户资金 = 当前余额 - (股价*股数) - 手续费
+      if (useBitcoin) {
+        account.bitcoin = Number(account.bitcoin) -
+          (Number(position.price) * Number(position.quantity)) - fee;
+      } else {
+        account.balance = Number(account.balance) -
+          (Number(position.price) * Number(position.quantity)) - fee;
       }
     }
     Log.system.info('更新对象为空, 执行新增操作');
