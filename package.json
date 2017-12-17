@@ -1,6 +1,6 @@
 {
   "name": "ns-manager",
-  "version": "0.0.42",
+  "version": "0.0.43",
   "description": "node-stock manager module",
   "repository": {
     "type": "git",
@@ -19,14 +19,12 @@
   "dependencies": {
     "moment": "^2.19.3",
     "ns-common": "0.0.12",
-    "ns-store": "0.0.36",
-    "ns-types": "0.0.28",
+    "ns-store": "0.0.37",
+    "ns-types": "0.0.30",
     "toml": "^2.3.3"
   },
   "devDependencies": {
-    "@types/cheerio": "0.22.2",
     "@types/config": "0.0.33",
-    "@types/lodash": "^4.14.85",
     "@types/mocha": "^2.2.41",
     "@types/node": "^8.5.1",
     "@types/power-assert": "^1.4.29",

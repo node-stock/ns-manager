@@ -92,9 +92,33 @@ export class AccountManager {
 
 /**
   * @class
+  * @classdesc 订单管理器
+  */
+export class OrderManager {
+
+  static async set(order: types.Model.Order) {
+    Log.system.info('记录订单信息[启动]');
+
+    // 获取当前账户资产信息
+    const account = await AccountManager.get(String(order.account_id));
+    if (!account) {
+      Log.system.error('获取当前账户资产信息为空！');
+      return;
+    }
+
+    // 保存交易记录
+    Log.system.info('保存订单记录');
+    await db.model.Order.upsert(order);
+
+    Log.system.info('记录交易信息[终了]');
+  }
+}
+
+/**
+  * @class
   * @classdesc 交易管理器
   */
-export class TraderManager {
+export class TransactionManager {
 
   static async set(accountId: string, order: types.LimitOrder) {
     Log.system.info('记录交易信息[启动]');
@@ -103,7 +127,7 @@ export class TraderManager {
     const account = await AccountManager.get(accountId);
     if (!account) {
       Log.system.error('获取当前账户资产信息为空！');
-      return null;
+      return;
     }
 
     // 保存交易记录

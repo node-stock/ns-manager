@@ -1,6 +1,6 @@
 import * as assert from 'power-assert';
 import * as types from 'ns-types';
-import { TraderManager, SignalManager } from './manager';
+import { TransactionManager, OrderManager, SignalManager } from './manager';
 import { PositionManager, AccountManager } from './manager';
 import { Store as db, Account } from 'ns-store';
 
@@ -89,7 +89,7 @@ const testBuyTrader = async () => {
     id: userId,
     balance: 300000
   }
-  await TraderManager.set(userId, order);
+  await TransactionManager.set(userId, order);
   assert(true);
 }
 
@@ -108,7 +108,7 @@ const testSellTrader = async () => {
     assert(false, '未查询到test账号信息！');
     return
   }
-  await TraderManager.set(account.id, order);
+  await TransactionManager.set(account.id, order);
   assert(true);
 }
 
@@ -183,7 +183,6 @@ const testSetCoinPosition = async () => {
     quantity: 0.01
   };
   await PositionManager.set(position);
-  assert(true);
 }
 
 const testGetAllAsset = async () => {
@@ -191,12 +190,29 @@ const testGetAllAsset = async () => {
   console.log(res)
 }
 
+const testOrderManager = async () => {
+  await db.sequelize.query('delete from `order`');
+  const accountId = 'coin';
+  const order: types.Model.Order = {
+    id: '2',
+    account_id: accountId,
+    price: 2300,
+    symbol: 'btc_jpy',
+    side: types.OrderSide.Buy,
+    quantity: 0.001,
+    status: types.OrderStatus.Unfilled
+  };
+  await OrderManager.set(order);
+  const res = await db.model.Order.findAll();
+  assert(res.length === 1);
+}
+
 describe('ns-manager', () => {
   before(async () => {
     await db.init(require('config').store);
   });
 
-  /*it('存储信号', testSetSignal);
+  it('存储信号', testSetSignal);
   it('获取信号', testGetSignal);
   it('删除信号', testRemoveSignal);
   it('记录买单交易', testBuyTrader);
@@ -205,8 +221,9 @@ describe('ns-manager', () => {
   it('获取资产', testGetAsset);
   it('获取全部用户资产', testGetAllAsset);
 
-  it('更新持仓', testSetPosition);*/
+  it('更新持仓', testSetPosition);
   it('更新数字货币持仓', testSetCoinPosition);
+  it('测试存储订单', testOrderManager);
 
   after(async () => {
     await db.close();
