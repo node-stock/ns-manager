@@ -60,7 +60,7 @@ const testRemoveSignal = async () => {
   })
   assert(signal);
   if (signal && signal.id) {
-    const res = await SignalManager.remove(signal.id);
+    const res = await SignalManager.removeById(signal.id);
     console.log(res);
     assert(res);
   }

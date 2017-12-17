@@ -32,16 +32,33 @@ export class SignalManager {
     const dbSignal = await this.get(signal);
     // 数据库中存在数据时，删除已存信号
     if (dbSignal) {
-      await this.remove(String(dbSignal.id));
+      await this.removeById(String(dbSignal.id));
     }
     // 写入数据库
     return await db.model.Signal.upsert(signal);
   }
 
-  static async remove(id: string) {
+  static async removeById(id: string) {
     return await db.model.Signal.destroy({
       where: { id }
     });
+  }
+
+  static async remove(signal: types.Model.Signal) {
+    const delOpt = <{ [Attr: string]: any }>{
+      raw: true,
+      where: {
+        symbol: signal.symbol
+      }
+    };
+    if (signal.side) {
+      delOpt.where.side = signal.side;
+    }
+    if (signal.backtest) {
+      delOpt.where.backtest = signal.backtest;
+      // delOpt.where.mocktime = signal.mocktime;
+    }
+    await db.model.Signal.destroy(delOpt);
   }
 }
 
