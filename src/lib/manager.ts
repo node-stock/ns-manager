@@ -1,9 +1,13 @@
-import { Store as db, Position, Account } from 'ns-store';
+import { Store as db, Position, Account, Order } from 'ns-store';
 import * as types from 'ns-types';
 import { Log, Util } from 'ns-common';
 import * as moment from 'moment';
 import { Sequelize } from 'sequelize-typescript';
 // process.env.NODE_ENV = 'development';
+
+const config = require('config');
+const bitbank = require('node-bitbankcc');
+const priApi = bitbank.privateApi(config.trader.apiKey, config.trader.secret);
 
 /**
   * @class
@@ -128,6 +132,38 @@ export class OrderManager {
     await db.model.Order.upsert(order);
 
     Log.system.info('记录交易信息[终了]');
+  }
+
+  static async updateStatus() {
+    Log.system.info('更新订单状态[启动]');
+    const orders = <Order[]>await db.model.Order.findAll({
+      raw: true,
+      where: {
+        status: types.OrderStatus.Unfilled,
+        type: types.SymbolType.cryptocoin
+      }
+    });
+    Log.system.info('待更新订单数：', orders.length);
+    if (orders.length === 0) {
+      Log.system.info('更新订单状态[终了]');
+      return;
+    }
+    for (const order of orders) {
+      let res;
+      if (!config.trader.test) {
+        res = await priApi.getOrder(order.symbol, order.id);
+        Log.system.info('真实环境，获取订单信息: ', JSON.stringify(res, null, 2));
+      } else {
+        res = { status: types.OrderStatus.FullyFilled };
+        Log.system.info('仿真环境，模拟获取订单信息: ', res);
+      }
+      if (res.status === types.OrderStatus.FullyFilled) {
+        Log.system.info(`更新${order.symbol}订单: ${order.id}`);
+        order.status = res.status;
+        await db.model.Order.upsert(order);
+      }
+    }
+    Log.system.info('更新订单状态[终了]');
   }
 }
 

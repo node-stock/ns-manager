@@ -82,6 +82,7 @@ const testBuyTrader = async () => {
     orderType: types.OrderType.Limit,
     tradeType: types.TradeType.Margin,
     eventType: types.EventType.Order,
+    symbolType: types.SymbolType.stock,
     price: 2000,
     amount: 100
   };
@@ -100,6 +101,7 @@ const testSellTrader = async () => {
     orderType: types.OrderType.Limit,
     tradeType: types.TradeType.Margin,
     eventType: types.EventType.Order,
+    symbolType: types.SymbolType.stock,
     price: 2100,
     amount: 100
   };
@@ -120,6 +122,7 @@ const testSetPosition = async () => {
     account_id: accountId,
     symbol,
     side: types.OrderSide.Buy,
+    type: types.SymbolType.stock,
     price: 2100,
     quantity: 100
   };
@@ -207,12 +210,16 @@ const testOrderManager = async () => {
   assert(res.length === 1);
 }
 
+const testUpdateStatus = async () => {
+  await OrderManager.updateStatus();
+}
+
 describe('ns-manager', () => {
   before(async () => {
     await db.init(require('config').store);
   });
 
-  it('存储信号', testSetSignal);
+  /*it('存储信号', testSetSignal);
   it('获取信号', testGetSignal);
   it('删除信号', testRemoveSignal);
   it('记录买单交易', testBuyTrader);
@@ -223,7 +230,8 @@ describe('ns-manager', () => {
 
   it('更新持仓', testSetPosition);
   it('更新数字货币持仓', testSetCoinPosition);
-  it('测试存储订单', testOrderManager);
+  it('测试存储订单', testOrderManager);*/
+  it('测试更新订单状态', testUpdateStatus);
 
   after(async () => {
     await db.close();
