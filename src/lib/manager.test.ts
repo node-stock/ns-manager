@@ -8,7 +8,7 @@ const testSetSignal = async () => {
   const res = await SignalManager.set({
     symbol: '6664',
     side: types.OrderSide.Buy,
-    price: 2000,
+    price: '2000',
     timeframe: '5min',
     notes: '备注项目'
   });
@@ -16,14 +16,14 @@ const testSetSignal = async () => {
   await SignalManager.set({
     symbol: '6664',
     side: types.OrderSide.Buy,
-    price: 2001,
+    price: '2001',
     timeframe: '5min',
     notes: '备注项目'
   });
   await SignalManager.set({
     symbol: '6664',
     side: types.OrderSide.Sell,
-    price: 2001,
+    price: '2001',
     timeframe: '5min',
     notes: '备注项目'
   });
@@ -77,18 +77,35 @@ const testBuyTrader = async () => {
     assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
   }
   const order: types.LimitOrder = {
-    symbol: '6664',
-    side: types.OrderSide.Buy,
-    orderType: types.OrderType.Limit,
-    tradeType: types.TradeType.Margin,
+    symbol: types.Pair.BTC_JPY,
+    price: '1675000',
+    amount: '0.00421125',
+    symbolType: types.SymbolType.cryptocoin,
     eventType: types.EventType.Order,
-    symbolType: types.SymbolType.stock,
-    price: 2000,
-    amount: 100
-  };
-  const account = {
-    id: userId,
-    balance: 300000
+    tradeType: types.TradeType.Spot,
+    orderType: types.OrderType.Limit,
+    side: types.OrderSide.Buy,
+    backtest: '1'
+  }
+  await TransactionManager.set(userId, order);
+  assert(true);
+}
+
+const testBuyCloseTrader = async () => {
+  const userId = 'test';
+  if (!await AccountManager.get(userId)) {
+    assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
+  }
+  const order: types.LimitOrder = {
+    symbol: types.Pair.BTC_JPY,
+    price: '1675000',
+    amount: '0.00421125',
+    symbolType: types.SymbolType.cryptocoin,
+    eventType: types.EventType.Order,
+    tradeType: types.TradeType.Spot,
+    orderType: types.OrderType.Limit,
+    side: types.OrderSide.BuyClose,
+    backtest: '1'
   }
   await TransactionManager.set(userId, order);
   assert(true);
@@ -102,8 +119,9 @@ const testSellTrader = async () => {
     tradeType: types.TradeType.Margin,
     eventType: types.EventType.Order,
     symbolType: types.SymbolType.stock,
-    price: 2100,
-    amount: 100
+    price: '2000',
+    amount: '100',
+    backtest: '1'
   };
   const account = await AccountManager.get('test');
   if (!account) {
@@ -115,77 +133,37 @@ const testSellTrader = async () => {
 }
 
 const testSetPosition = async () => {
-  const symbol = 'M6664';
-  const accountId = 'test';
-  // 建立多仓
-  const position: types.Model.Position = {
-    account_id: accountId,
-    symbol,
+  const positions: types.Position[] = [{
+    account_id: 'test',
+    symbol: types.Pair.BTC_JPY,
+    type: types.SymbolType.cryptocoin,
     side: types.OrderSide.Buy,
-    type: types.SymbolType.stock,
-    price: 2100,
-    quantity: 100
-  };
-  await PositionManager.set(position);
-  // 平空仓
-  position.side = types.OrderSide.SellClose;
-  position.price = 2200;
-  await PositionManager.set(position);
-  // 建立空仓
-  position.side = types.OrderSide.Sell;
-  position.price = 2120;
-  await PositionManager.set(position);
-  // 建立空仓
-  position.side = types.OrderSide.Sell;
-  position.price = 2000;
-  await PositionManager.set(position);
-  // 平空仓
-  position.side = types.OrderSide.SellClose;
-  position.price = 1900;
-  await PositionManager.set(position);
-  // 平多仓
-  position.side = types.OrderSide.BuyClose;
-  position.price = 2250;
-  await PositionManager.set(position);
-  // 平空仓
-  position.side = types.OrderSide.SellClose;
-  position.price = 2300;
-  await PositionManager.set(position);
-  // 平多仓
-  position.side = types.OrderSide.BuyClose;
-  position.price = 2400;
-  await PositionManager.set(position);
-  // 建立多仓
-  position.side = types.OrderSide.Buy;
-  position.price = 2100;
-  await PositionManager.set(position);
-  // 建立多仓
-  position.side = types.OrderSide.Buy;
-  position.price = 2120;
-  await PositionManager.set(position);
-  // 建立多仓
-  position.side = types.OrderSide.Buy;
-  position.price = 2230;
-  await PositionManager.set(position);
-  // 平多仓
-  position.side = types.OrderSide.BuyClose;
-  position.price = 2320;
-  await PositionManager.set(position);
-  assert(true);
-}
+    price: '1804897',
+    quantity: '0.00325',
+    backtest: '1'
+  }];
 
-const testSetCoinPosition = async () => {
-  const symbol = 'bcc_jpy';
-  const accountId = 'coin';
-  // 建立多仓
-  const position: types.Model.Position = {
-    account_id: accountId,
-    symbol,
+  const account: types.Account = {
+    id: 'test',
+    balance: '1230004.12442',
+    bitcoin: '0.025',
+    backtest: '1',
+    positions,// positions: [], // 
+    transactions: []
+  }
+  const order: types.LimitOrder = {
+    symbol: types.Pair.BTC_JPY,
+    price: '1675000',
+    amount: '0.00421125',
+    symbolType: types.SymbolType.cryptocoin,
+    eventType: types.EventType.Order,
+    tradeType: types.TradeType.Spot,
+    orderType: types.OrderType.Limit,
     side: types.OrderSide.BuyClose,
-    price: 204897,
-    quantity: 0.01
-  };
-  await PositionManager.set(position);
+    backtest: '1'
+  }
+  await PositionManager.set(account, order);
+  assert(true);
 }
 
 const testGetAllAsset = async () => {
@@ -199,10 +177,10 @@ const testOrderManager = async () => {
   const order: types.Model.Order = {
     id: '2',
     account_id: accountId,
-    price: 2300,
+    price: '2300',
     symbol: 'btc_jpy',
     side: types.OrderSide.Buy,
-    quantity: 0.001,
+    quantity: '0.001',
     status: types.OrderStatus.Unfilled
   };
   await OrderManager.set(order);
@@ -221,17 +199,14 @@ describe('ns-manager', () => {
 
   /*it('存储信号', testSetSignal);
   it('获取信号', testGetSignal);
-  it('删除信号', testRemoveSignal);
-  it('记录买单交易', testBuyTrader);
-  it('记录卖单交易', testSellTrader);
-
-  it('获取资产', testGetAsset);
-  it('获取全部用户资产', testGetAllAsset);
-
-  it('更新持仓', testSetPosition);
-  it('更新数字货币持仓', testSetCoinPosition);
-  it('测试存储订单', testOrderManager);*/
-  it('测试更新订单状态', testUpdateStatus);
+  it('删除信号', testRemoveSignal);*/
+  //it('建仓交易', testBuyTrader);
+  it('平仓交易', testBuyCloseTrader);
+  /*
+    it('获取资产', testGetAsset);
+    it('获取全部用户资产', testGetAllAsset);
+    it('测试存储订单', testOrderManager);
+    it('测试更新订单状态', testUpdateStatus);*/
 
   after(async () => {
     await db.close();
