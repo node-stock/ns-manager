@@ -1,29 +1,41 @@
 import * as assert from 'power-assert';
-import { OrderSide, LimitOrder, OrderType, TradeType, EventType } from 'ns-types';
-import { Manager } from './manager';
+import * as types from 'ns-types';
+import { TransactionManager, OrderManager, SignalManager } from './manager';
+import { PositionManager, AccountManager } from './manager';
 import { Store as db, Account } from 'ns-store';
 
-const manager = new Manager();
-
-const testSetSignal = async (done: any) => {
-  const res = await manager.signal.set({
+const testSetSignal = async () => {
+  const res = await SignalManager.set({
     symbol: '6664',
-    side: OrderSide.Buy,
-    price: 2000,
+    side: types.OrderSide.Buy,
+    price: '2000',
     timeframe: '5min',
     notes: '备注项目'
   });
-  console.log(res);
-  assert(res);
-  done();
+  assert(res === true);
+  await SignalManager.set({
+    symbol: '6664',
+    side: types.OrderSide.Buy,
+    price: '2001',
+    timeframe: '5min',
+    notes: '备注项目'
+  });
+  await SignalManager.set({
+    symbol: '6664',
+    side: types.OrderSide.Sell,
+    price: '2001',
+    timeframe: '5min',
+    notes: '备注项目'
+  });
+
 }
 
-const testGetSignal = async (done: any) => {
+const testGetSignal = async () => {
   const findOpt = {
     symbol: '6664',
-    side: OrderSide.Buy
+    side: types.OrderSide.Buy
   };
-  const signal = await manager.signal.get(findOpt);
+  const signal = await SignalManager.get(findOpt);
   console.log(`where:${JSON.stringify(findOpt)} \nsignal:`, signal);
   assert(signal);
   if (signal) {
@@ -33,121 +45,170 @@ const testGetSignal = async (done: any) => {
   const findOpt2 = {
     symbol: '6664'
   };
-  const signal2 = await manager.signal.get(findOpt2);
+  const signal2 = await SignalManager.get(findOpt2);
   console.log(`\nwhere:${JSON.stringify(findOpt2)} \nsignal:`, signal2);
   assert(signal2);
   if (signal2) {
     assert(signal2.symbol === '6664');
   }
-  done();
 }
 
-const testRemoveSignal = async (done: any) => {
-  const signal = await manager.signal.get({
+const testRemoveSignal = async () => {
+  const signal = await SignalManager.get({
     symbol: '6664',
-    side: OrderSide.Buy
+    side: types.OrderSide.Buy
   })
   assert(signal);
   if (signal && signal.id) {
-    const res = await manager.signal.remove(signal.id);
+    const res = await SignalManager.removeById(signal.id);
     console.log(res);
     assert(res);
   }
-  done();
 }
 
-const testGetAsset = async (done: any) => {
-  const res = await manager.asset.get('backtest1');
+const testGetAsset = async () => {
+  const res = await AccountManager.get('stoc');
   console.log(res)
-  /*const res = await db.model.Account.findById('test');
-  console.log('Account: ', res)
-  if (!res) {
-    await db.model.Account.upsert({
-      id: 'test',
-      balance: 300000
-    });
-  }
-  const balance = await manager.asset.getBalance('test');
-  console.log(balance);
-  assert(true);
-  const balance2 = await manager.asset.getBalance('testxxx');
-  console.log(balance2);
-  assert(balance2 === 0);*/
-  done();
 }
 
-const testBuyTrader = async (done: any) => {
+const testBuyTrader = async () => {
   const userId = 'test';
-  if (!await manager.asset.get(userId)) {
+  if (!await AccountManager.get(userId)) {
     assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
-    done();
   }
-  const order: LimitOrder = {
-    symbol: '6664',
-    side: OrderSide.Buy,
-    orderType: OrderType.Limit,
-    tradeType: TradeType.Margin,
-    eventType: EventType.Order,
-    price: 2000,
-    amount: 100
-  };
-  const account = {
-    id: userId,
-    balance: 300000
+  const order: types.LimitOrder = {
+    symbol: types.Pair.BTC_JPY,
+    price: '1675000',
+    amount: '0.00421125',
+    symbolType: types.SymbolType.cryptocoin,
+    eventType: types.EventType.Order,
+    tradeType: types.TradeType.Spot,
+    orderType: types.OrderType.Limit,
+    side: types.OrderSide.Buy,
+    backtest: '1'
   }
-  await manager.trader.set(<Account>account, order);
+  await TransactionManager.set(userId, order);
   assert(true);
-  done();
 }
 
-const testSellTrader = async (done: any) => {
-  const order: LimitOrder = {
+const testBuyCloseTrader = async () => {
+  const userId = 'test';
+  if (!await AccountManager.get(userId)) {
+    assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
+  }
+  const order: types.LimitOrder = {
+    symbol: types.Pair.BTC_JPY,
+    price: '1675000',
+    amount: '0.00421125',
+    symbolType: types.SymbolType.cryptocoin,
+    eventType: types.EventType.Order,
+    tradeType: types.TradeType.Spot,
+    orderType: types.OrderType.Limit,
+    side: types.OrderSide.BuyClose,
+    backtest: '1'
+  }
+  await TransactionManager.set(userId, order);
+  assert(true);
+}
+
+const testSellTrader = async () => {
+  const order: types.LimitOrder = {
     symbol: '6664',
-    side: OrderSide.Sell,
-    orderType: OrderType.Limit,
-    tradeType: TradeType.Margin,
-    eventType: EventType.Order,
-    price: 2100,
-    amount: 100
+    side: types.OrderSide.Sell,
+    orderType: types.OrderType.Limit,
+    tradeType: types.TradeType.Margin,
+    eventType: types.EventType.Order,
+    symbolType: types.SymbolType.stock,
+    price: '2000',
+    amount: '100',
+    backtest: '1'
   };
-  const account = await manager.asset.get('test');
+  const account = await AccountManager.get('test');
   if (!account) {
-    assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
-    done();
+    assert(false, '未查询到test账号信息！');
+    return
   }
-  await manager.trader.set(<Account>account, order);
+  await TransactionManager.set(account.id, order);
   assert(true);
-  done();
 }
 
-// TODO PositionManager test
+const testSetPosition = async () => {
+  const positions: types.Position[] = [{
+    account_id: 'test',
+    symbol: types.Pair.BTC_JPY,
+    type: types.SymbolType.cryptocoin,
+    side: types.OrderSide.Buy,
+    price: '1804897',
+    quantity: '0.00325',
+    backtest: '1'
+  }];
+
+  const account: types.Account = {
+    id: 'test',
+    balance: '1230004.12442',
+    bitcoin: '0.025',
+    backtest: '1',
+    positions,// positions: [], // 
+    transactions: []
+  }
+  const order: types.LimitOrder = {
+    symbol: types.Pair.BTC_JPY,
+    price: '1675000',
+    amount: '0.00421125',
+    symbolType: types.SymbolType.cryptocoin,
+    eventType: types.EventType.Order,
+    tradeType: types.TradeType.Spot,
+    orderType: types.OrderType.Limit,
+    side: types.OrderSide.BuyClose,
+    backtest: '1'
+  }
+  await PositionManager.set(account, order);
+  assert(true);
+}
+
+const testGetAllAsset = async () => {
+  const res = await AccountManager.getAll();
+  console.log(res)
+}
+
+const testOrderManager = async () => {
+  await db.sequelize.query('delete from `order`');
+  const accountId = 'coin';
+  const order: types.Model.Order = {
+    id: '2',
+    account_id: accountId,
+    price: '2300',
+    symbol: 'btc_jpy',
+    side: types.OrderSide.Buy,
+    quantity: '0.001',
+    status: types.OrderStatus.Unfilled
+  };
+  await OrderManager.set(order);
+  const res = await db.model.Order.findAll();
+  assert(res.length === 1);
+}
+
+const testUpdateStatus = async () => {
+  await OrderManager.updateStatus();
+}
 
 describe('ns-manager', () => {
-  it('存储信号', function (done) {
-    this.timeout(20000);
-    testSetSignal(done);
+  before(async () => {
+    await db.init(require('config').store);
   });
-  it('获取信号', function (done) {
-    this.timeout(20000);
-    testGetSignal(done);
-  });
-  it('删除信号', function (done) {
-    this.timeout(20000);
-    testRemoveSignal(done);
-  });
-  it('获取资产', function (done) {
-    this.timeout(20000);
-    testGetAsset(done);
-  });
-  it('记录买单交易', function (done) {
-    this.timeout(20000);
-    testBuyTrader(done);
-  });
-  it('记录卖单交易', function (done) {
-    this.timeout(20000);
-    testSellTrader(done);
-  });
-  after(() => {
-    manager.destroy();
+
+  /*it('存储信号', testSetSignal);
+  it('获取信号', testGetSignal);
+  it('删除信号', testRemoveSignal);*/
+  //it('建仓交易', testBuyTrader);
+  it('平仓交易', testBuyCloseTrader);
+  /*
+    it('获取资产', testGetAsset);
+    it('获取全部用户资产', testGetAllAsset);
+    it('测试存储订单', testOrderManager);
+    it('测试更新订单状态', testUpdateStatus);*/
+
+  after(async () => {
+    await db.close();
   });
 });

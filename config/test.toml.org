@@ -12,3 +12,14 @@
   timezone = "+09:00"
   operatorsAliases = false
   logging = false
+###
+### [trader]
+###
+### trader相关配置
+###
+[trader]
+  # 测试模式时 不执行真实交易操作
+  test = false
+  # 只拥有交易状况查询权限
+  apiKey = "xx"
+  secret = "cccs"

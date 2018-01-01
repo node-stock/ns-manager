@@ -1,6 +1,6 @@
 {
   "name": "ns-manager",
-  "version": "0.0.25",
+  "version": "0.0.48",
   "description": "node-stock manager module",
   "repository": {
     "type": "git",
@@ -13,30 +13,34 @@
     "rm": "rimraf dist",
     "tsc": "npm run rm && tsc -p tsconfig.development.json",
     "tslint": "tslint --project ./tslint.json",
-    "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 3000 --require intelli-espower-loader",
+    "test": "cross-env NODE_ENV=test mocha dist/**/*.test.js --timeout 8000 --require intelli-espower-loader",
     "prepare": "npm run rm && tsc -p tsconfig.json"
   },
   "dependencies": {
-    "ns-common": "0.0.11",
-    "ns-store": "0.0.28",
-    "ns-types": "0.0.18"
+    "bignumber.js": "^5.0.0",
+    "bitbank-handler": "0.0.1-beta.2",
+    "moment": "^2.19.3",
+    "ns-calc": "0.0.4",
+    "ns-common": "0.0.15",
+    "ns-store": "0.0.42",
+    "ns-types": "0.0.40",
+    "toml": "^2.3.3"
   },
   "devDependencies": {
-    "@types/cheerio": "0.22.2",
+    "@types/bignumber.js": "^4.0.3",
     "@types/config": "0.0.33",
-    "@types/lodash": "^4.14.85",
     "@types/mocha": "^2.2.41",
-    "@types/node": "^8.0.20",
+    "@types/node": "^8.5.1",
     "@types/power-assert": "^1.4.29",
     "config": "^1.26.1",
     "cross-env": "^5.1.0",
     "debug": "^3.1.0",
     "intelli-espower-loader": "^1.0.1",
-    "mocha": "^3.5.0",
-    "mysql2": "^1.4.2",
+    "mocha": "^4.0.1",
+    "mysql2": "^1.5.1",
     "power-assert": "^1.4.4",
     "rimraf": "^2.6.2",
-    "ts-node": "^3.3.0",
+    "ts-node": "^4.0.2",
     "tslint": "^5.6.0",
     "typescript": "^2.6.1"
   }
