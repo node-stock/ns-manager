@@ -5,11 +5,14 @@ import { Log, Util } from 'ns-common';
 import * as moment from 'moment';
 import { Sequelize } from 'sequelize-typescript';
 import { BigNumber } from 'BigNumber.js';
+import { Bitbank, BitbankApiActiveOrdersOptions, BitbankApiOrder } from 'bitbank-handler';
 // process.env.NODE_ENV = 'development';
 
 const config = require('config');
-const bitbank = require('node-bitbankcc');
-const priApi = bitbank.privateApi(config.trader.apiKey, config.trader.secret);
+const bitbank = new Bitbank({
+  apiKey: config.trader.apiKey,
+  apiSecret: config.trader.secret
+});
 
 /**
   * @class
@@ -149,40 +152,58 @@ export class OrderManager {
       return;
     }
     for (const order of orders) {
-      let res;
+      let res: BitbankApiOrder;
       if (!config.trader.test) {
-        res = await priApi.getOrder(order.symbol, order.id);
+        res = (await bitbank.getOrder(order.symbol, order.id).toPromise());
         Log.system.info('真实环境，获取订单信息: ', JSON.stringify(res, null, 2));
       } else {
-        res = { status: types.OrderStatus.FullyFilled };
+        type sideType = 'buy' | 'sell';
+        let side: sideType = 'buy'
+        if (order.side === types.OrderSide.BuyClose) {
+          side = 'sell';
+        }
+        res = {
+          order_id: Date.now(),
+          pair: order.symbol,
+          side,
+          type: 'limit',
+          start_amount: order.quantity,
+          remaining_amount: order.quantity,
+          executed_amount: order.quantity,
+          price: order.price,
+          average_price: order.price,
+          ordered_at: Date.now(),
+          status: types.OrderStatus.FullyFilled
+        };
         Log.system.info('仿真环境，模拟获取订单信息: ', res);
       }
       if (res.status === types.OrderStatus.FullyFilled
         || res.status === types.OrderStatus.CanceledUnfilled) {
         Log.system.info(`更新${order.symbol}订单: ${order.id}`);
         order.status = res.status;
+        Log.system.info('更新订单状态：', order.status);
         await db.model.Order.upsert(order);
-
+        await db.model.Order.destroy({
+          where: {
+            id: order.id
+          }
+        });
         // 订单成功时记录持仓表
         if (res.status === types.OrderStatus.FullyFilled) {
-          const position: types.Model.Position = {
-            account_id: order.account_id,
-            quantity: order.quantity,
+          Log.system.info('订单成功,记录持仓表');
+          await TransactionManager.set(order.account_id, {
+            eventId: Number(order.id),
             symbol: order.symbol,
-            type: order.type,
-            side: order.side,
-            price: order.price
-          };
-          await db.model.Position.upsert(position);
+            price: order.price,
+            amount: order.quantity,
+            symbolType: <types.SymbolType>order.type,
+            eventType: types.EventType.Order,
+            tradeType: types.TradeType.Spot,
+            orderType: types.OrderType.Limit,
+            side: <types.OrderSide>order.side,
+            backtest: order.backtest
+          });
         }
-        // 更新交易记录
-        const transaction: types.Model.Transaction = Object.assign({}, order, {
-          id: null,
-          order: res['order_id'],
-          account_id: order.account_id,
-          quantity: order.quantity
-        });
-        await db.model.Transaction.upsert(transaction);
       }
     }
     Log.system.info('更新订单状态[终了]');
@@ -276,6 +297,7 @@ export class PositionManager {
     if (accPosi.position) {
       // 持仓数量为零 并且有持仓id
       if (accPosi.position.quantity === "0" && accPosi.position.id) {
+        Log.system.info('持仓数量为零,执行清仓');
         // 清仓
         await db.model.Position.destroy({
           where: {
@@ -283,10 +305,12 @@ export class PositionManager {
           }
         });
       } else {
+        Log.system.info('更新持仓', JSON.stringify(accPosi.position, null, 2));
         // 更新持仓
         await db.model.Position.upsert(accPosi.position);
       }
     }
+    Log.system.info('更新账户资产', JSON.stringify(account, null, 2));
     // 更新账户资产
     await db.model.Account.upsert(account);
 
