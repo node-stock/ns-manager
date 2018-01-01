@@ -4,13 +4,23 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "strict": true,
-    "types": ["node", "mocha"],
-    "typeRoots": ["./node_modules/@types"],
+    "types": [
+      "node",
+      "mocha"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
     "rootDir": "./src",
     "outDir": "./dist",
     "declaration": true,
-    "experimentalDecorators" : true
+    "experimentalDecorators": true,
+    "sourceMap": true
   },
-  "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "./src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

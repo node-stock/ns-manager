@@ -1,6 +1,6 @@
 {
   "name": "ns-manager",
-  "version": "0.0.46",
+  "version": "0.0.47",
   "description": "node-stock manager module",
   "repository": {
     "type": "git",
@@ -21,9 +21,9 @@
     "moment": "^2.19.3",
     "node-bitbankcc": "^1.0.1",
     "ns-calc": "0.0.4",
-    "ns-common": "0.0.12",
+    "ns-common": "0.0.14",
     "ns-store": "0.0.42",
-    "ns-types": "0.0.38",
+    "ns-types": "0.0.39",
     "toml": "^2.3.3"
   },
   "devDependencies": {
