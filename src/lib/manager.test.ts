@@ -12,7 +12,7 @@ const testSetSignal = async () => {
     timeframe: '5min',
     notes: '备注项目'
   });
-  assert(res === true);
+  assert(res);
   await SignalManager.set({
     symbol: '6664',
     side: types.OrderSide.Buy,
@@ -28,6 +28,19 @@ const testSetSignal = async () => {
     notes: '备注项目'
   });
 
+}
+
+const testUpdateSignal = async () => {
+  await SignalManager.set({
+    // id: '390925',
+    symbol: '6664',
+    side: types.OrderSide.Buy,
+    type: types.SymbolType.stock,
+    price: '2000',
+    timeframe: '5min',
+    backtest: '1',
+    notes: '备注项目'
+  });
 }
 
 const testGetSignal = async () => {
@@ -77,7 +90,8 @@ const testBuyTrader = async () => {
     assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
   }
   const order: types.LimitOrder = {
-    symbol: types.Pair.BTC_JPY,
+    account_id: 'test',
+    symbol: types.Pair.XRP_JPY,
     price: '1675000',
     amount: '0.00421125',
     symbolType: types.SymbolType.cryptocoin,
@@ -87,7 +101,7 @@ const testBuyTrader = async () => {
     side: types.OrderSide.Buy,
     backtest: '1'
   }
-  await TransactionManager.set(userId, order);
+  await TransactionManager.set(order);
   assert(true);
 }
 
@@ -97,8 +111,10 @@ const testBuyCloseTrader = async () => {
     assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
   }
   const order: types.LimitOrder = {
+    account_id: 'test',
+    eventId: Date.now(),
     symbol: types.Pair.BTC_JPY,
-    price: '1675000',
+    price: '1685000',
     amount: '0.00421125',
     symbolType: types.SymbolType.cryptocoin,
     eventType: types.EventType.Order,
@@ -107,12 +123,13 @@ const testBuyCloseTrader = async () => {
     side: types.OrderSide.BuyClose,
     backtest: '1'
   }
-  await TransactionManager.set(userId, order);
+  await TransactionManager.set(order);
   assert(true);
 }
 
 const testSellTrader = async () => {
   const order: types.LimitOrder = {
+    account_id: 'test',
     symbol: '6664',
     side: types.OrderSide.Sell,
     orderType: types.OrderType.Limit,
@@ -128,7 +145,7 @@ const testSellTrader = async () => {
     assert(false, '未查询到test账号信息！');
     return
   }
-  await TransactionManager.set(account.id, order);
+  await TransactionManager.set(order);
   assert(true);
 }
 
@@ -145,13 +162,84 @@ const testSetPosition = async () => {
 
   const account: types.Account = {
     id: 'test',
-    balance: '1230004.12442',
-    bitcoin: '0.025',
+    "assets": [
+      {
+        "asset": "jpy",
+        account_id: 'test',
+        type: types.SymbolType.cryptocoin,
+        backtest: '1',
+        "amount_precision": 4,
+        "onhand_amount": "419139.4737",
+        "locked_amount": "0.0000",
+        "free_amount": "419139.4737"
+      },
+      {
+        account_id: 'test',
+        type: types.SymbolType.cryptocoin,
+        backtest: '1',
+        "asset": "btc",
+        "amount_precision": 8,
+        "onhand_amount": "0.025",
+        "locked_amount": "0.00000000",
+        "free_amount": "0.025"
+      },
+      {
+        account_id: 'test',
+        type: types.SymbolType.cryptocoin,
+        backtest: '1',
+        "asset": "ltc",
+        "amount_precision": 8,
+        "onhand_amount": "0.00000000",
+        "locked_amount": "0.00000000",
+        "free_amount": "0.00000000"
+      },
+      {
+        account_id: 'test',
+        type: types.SymbolType.cryptocoin,
+        backtest: '1',
+        "asset": "xrp",
+        "amount_precision": 6,
+        "onhand_amount": "539.369900",
+        "locked_amount": "539.369900",
+        "free_amount": "0.000000"
+      },
+      {
+        account_id: 'test',
+        type: types.SymbolType.cryptocoin,
+        backtest: '1',
+        "asset": "eth",
+        "amount_precision": 8,
+        "onhand_amount": "0.00000000",
+        "locked_amount": "0.00000000",
+        "free_amount": "0.00000000"
+      },
+      {
+        account_id: 'test',
+        type: types.SymbolType.cryptocoin,
+        backtest: '1',
+        "asset": "mona",
+        "amount_precision": 8,
+        "onhand_amount": "0.05000000",
+        "locked_amount": "0.00000000",
+        "free_amount": "0.05000000"
+      },
+      {
+        account_id: 'test',
+        type: types.SymbolType.cryptocoin,
+        backtest: '1',
+        "asset": "bcc",
+        "amount_precision": 8,
+        "onhand_amount": "0.00000000",
+        "locked_amount": "0.00000000",
+        "free_amount": "0.00000000"
+      }
+    ],
     backtest: '1',
     positions,// positions: [], // 
     transactions: []
   }
   const order: types.LimitOrder = {
+    account_id: 'test',
     symbol: types.Pair.BTC_JPY,
     price: '1675000',
     amount: '0.00421125',
@@ -192,21 +280,38 @@ const testUpdateStatus = async () => {
   await OrderManager.updateStatus();
 }
 
+const testGetOrder = async () => {
+  const order: types.Model.Order = {
+    account_id: 'coin',
+    signal_id: '390928',
+    symbol: 'btc_jpy',
+    side: types.OrderSide.Buy
+  };
+  const res = await OrderManager.get(order, true);
+  console.log(res);
+}
+
+const testRemoveAllSignal = async () => {
+  await SignalManager.removeAll();
+}
+
 describe('ns-manager', () => {
   before(async () => {
     await db.init(require('config').store);
   });
 
-  /*it('存储信号', testSetSignal);
+  /*it('更新信号', testUpdateSignal);
+  it('存储信号', testSetSignal);
   it('获取信号', testGetSignal);
   it('删除信号', testRemoveSignal);*/
   //it('建仓交易', testBuyTrader);
-  it('平仓交易', testBuyCloseTrader);
-  /*
-    it('获取资产', testGetAsset);
-    it('获取全部用户资产', testGetAllAsset);
-    it('测试存储订单', testOrderManager);
-    it('测试更新订单状态', testUpdateStatus);*/
+  // it('平仓交易', testBuyCloseTrader);
+  /*it('获取资产', testGetAsset);
+  it('获取全部用户资产', testGetAllAsset);
+  it('测试存储订单', testOrderManager);*/
+  // it('测试更新订单状态', testUpdateStatus);
+  // it('测试获取订单', testGetOrder);
+  it('测试删除全部信号', testRemoveAllSignal);
 
   after(async () => {
     await db.close();
