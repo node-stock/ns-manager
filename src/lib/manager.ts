@@ -1,9 +1,10 @@
-import { Store as db, Position, Account, Order } from 'ns-store';
+import { Store as db, Position, Account, Asset, Order, Signal } from 'ns-store';
 import * as types from 'ns-types';
-import { Calc, IAccPosi } from 'ns-calc';
+import { Calc, ICalcOutput } from 'ns-calc';
 import { Log, Util } from 'ns-common';
 import * as moment from 'moment';
 import { Sequelize } from 'sequelize-typescript';
+import { SlackAlerter } from 'ns-alerter';
 import { BigNumber } from 'BigNumber.js';
 import { Bitbank, BitbankApiActiveOrdersOptions, BitbankApiOrder } from 'bitbank-handler';
 // process.env.NODE_ENV = 'development';
@@ -37,11 +38,30 @@ export class SignalManager {
     return <types.Model.Signal | null>await db.model.Signal.find(findOpt);
   }
 
+  static async getAll(signal: types.Model.Signal): Promise<types.Model.Signal[]> {
+    const findOpt = <{ [Attr: string]: any }>{
+      raw: true,
+      where: {
+        symbol: signal.symbol
+      }
+    };
+    if (signal.side) {
+      findOpt.where.side = signal.side;
+    }
+    if (signal.backtest) {
+      findOpt.where.backtest = signal.backtest;
+      // findOpt.where.mocktime = signal.mocktime;
+    }
+    return <Signal[]>await db.model.Signal.findAll(findOpt);
+  }
+
   static async set(signal: types.Model.Signal) {
-    const dbSignal = await this.get(signal);
-    // 数据库中存在数据时，删除已存信号
-    if (dbSignal) {
-      await this.removeById(String(dbSignal.id));
+    // 新增信号是删除之前信号
+    if (!signal.id) {
+      const delSignal: types.Model.Signal = Object.assign({}, signal);
+      delete delSignal.side;
+      // 删除已存信号
+      await SignalManager.remove(delSignal);
     }
     // 写入数据库
     return await db.model.Signal.upsert(signal);
@@ -69,6 +89,12 @@ export class SignalManager {
     }
     await db.model.Signal.destroy(delOpt);
   }
+
+  static async removeAll() {
+    await db.model.Signal.destroy({
+      where: {}
+    });
+  }
 }
 
 /**
@@ -89,6 +115,14 @@ export class AccountManager {
         }
       });
       account.positions = <Position[] | undefined>positions;
+
+      const assets = await db.model.Asset.findAll({
+        raw: true,
+        where: {
+          account_id: accountId
+        }
+      });
+      account.assets = <Asset[] | undefined>assets;
     }
     return <types.Account>account;
   }
@@ -109,8 +143,28 @@ export class AccountManager {
           account.positions = accPosiList;
         })
       }
+      const assets = <Asset[] | undefined>await db.model.Asset.findAll({ raw: true });
+      if (assets && assets.length > 0) {
+        accountList.forEach((account) => {
+          const accAssetList = assets.filter((asset) => {
+            return asset.account_id === account.id;
+          });
+          account.assets = accAssetList;
+        })
+      }
       return accountList;
     }
+  }
+
+  static async updateAssets(assets: types.Asset[]) {
+    await db.model.Asset.bulkCreate(assets, {
+      updateOnDuplicate: [
+        'onhand_amount',
+        'locked_amount',
+        'free_amount',
+        'updated_at'
+      ]
+    });
   }
 }
 
@@ -130,9 +184,33 @@ export class OrderManager {
       return;
     }
 
-    // 保存交易记录
+    // 保存订单记录
     Log.system.info('保存订单记录');
     await db.model.Order.upsert(order);
+    // 计算账户资产
+    const calcOutput = Calc.order({
+      account, order: {
+        account_id: String(order.account_id),
+        price: String(order.price),
+        symbol: order.symbol,
+        symbolType: <types.SymbolType>order.type,
+        orderType: types.OrderType.Limit,
+        tradeType: types.TradeType.Spot,
+        side: <types.OrderSide>order.side,
+        amount: String(order.quantity),
+        eventType: types.EventType.Order,
+        backtest: String(order.backtest),
+        mocktime: order.mocktime
+      }
+    });
+    if (!calcOutput || !calcOutput.account) {
+      Log.system.error('计算账户资产出错[异常终了]');
+      return;
+    }
+
+    Log.system.info('更新账户资产', JSON.stringify(calcOutput.account.assets, null, 2));
+    // 更新账户资产
+    await AccountManager.updateAssets(calcOutput.account.assets);
 
     Log.system.info('记录交易信息[终了]');
   }
@@ -153,7 +231,7 @@ export class OrderManager {
     }
     for (const order of orders) {
       let res: BitbankApiOrder;
-      if (!config.trader.test) {
+      if (order.backtest === '0') {
         res = (await bitbank.getOrder(order.symbol, order.id).toPromise());
         Log.system.info('真实环境，获取订单信息: ', JSON.stringify(res, null, 2));
       } else {
@@ -163,7 +241,7 @@ export class OrderManager {
           side = 'sell';
         }
         res = {
-          order_id: Date.now(),
+          order_id: Number(order.id),
           pair: order.symbol,
           side,
           type: 'limit',
@@ -191,8 +269,9 @@ export class OrderManager {
         // 订单成功时记录持仓表
         if (res.status === types.OrderStatus.FullyFilled) {
           Log.system.info('订单成功,记录持仓表');
-          await TransactionManager.set(order.account_id, {
-            eventId: Number(order.id),
+          await TransactionManager.set({
+            id: order.id,
+            account_id: order.account_id,
             symbol: order.symbol,
             price: order.price,
             amount: order.quantity,
@@ -208,6 +287,18 @@ export class OrderManager {
     }
     Log.system.info('更新订单状态[终了]');
   }
+
+  static async get(order: types.Model.Order, showRemoved: boolean): Promise<types.Model.Order | null> {
+    const option = <{ [Attr: string]: any }>{
+      where: {},
+      raw: true
+    }
+    if (showRemoved) {
+      option.paranoid = false;
+    }
+    Object.assign(option.where, order);
+    return <types.Model.Order | null>await db.model.Order.findOne(option);
+  }
 }
 
 /**
@@ -216,11 +307,11 @@ export class OrderManager {
   */
 export class TransactionManager {
 
-  static async set(accountId: string, order: types.Order) {
+  static async set(order: types.Order) {
     Log.system.info('记录交易信息[启动]');
 
     // 获取当前账户资产信息
-    const account = await AccountManager.get(accountId);
+    const account = await AccountManager.get(order.account_id);
     if (!account) {
       Log.system.error('获取当前账户资产信息为空！');
       return;
@@ -230,9 +321,8 @@ export class TransactionManager {
     Log.system.info('保存交易记录');
     const transaction: types.Model.Transaction = Object.assign({}, order, {
       id: null,
-      order: order.eventId ? String(order.eventId) : undefined,
+      order_no: order.id ? String(order.id) : undefined,
       type: order.symbolType,
-      account_id: accountId,
       quantity: order.amount
     });
     await db.model.Transaction.upsert(transaction);
@@ -272,47 +362,48 @@ export class PositionManager {
    */
   static async set(account: types.Account, order: types.Order) {
     Log.system.info('更新持仓[启动]');
-    let accPosi: IAccPosi | undefined;
+    let calcOutput: ICalcOutput | undefined;
     switch (order.side) {
       // 多单买入
       case types.OrderSide.Buy:
-        accPosi = Calc.openPosition({ account, order });
+        calcOutput = Calc.openPosition({ account, order });
         break;
       // 多单卖出
       case types.OrderSide.BuyClose:
-        accPosi = Calc.closePosition({ account, order });
+        calcOutput = Calc.closePosition({ account, order });
         break;
     }
 
-    if (!accPosi || !accPosi.account) {
+    if (!calcOutput || !calcOutput.account) {
       Log.system.error('更新持仓[异常终了]');
       return;
     }
-    if ((new BigNumber(accPosi.account.bitcoin)).isNegative()
-      || (new BigNumber(accPosi.account.balance)).isNegative()) {
-      Log.system.error(`余额（余币）：${accPosi.account.balance}(${accPosi.account.bitcoin})为负数，更新持仓[异常终了]`);
-      return;
-    }
 
-    if (accPosi.position) {
+    if (calcOutput.position) {
       // 持仓数量为零 并且有持仓id
-      if (accPosi.position.quantity === "0" && accPosi.position.id) {
+      if (calcOutput.position.quantity === "0" && calcOutput.position.id) {
         Log.system.info('持仓数量为零,执行清仓');
         // 清仓
         await db.model.Position.destroy({
           where: {
-            id: accPosi.position.id
+            id: calcOutput.position.id
           }
         });
       } else {
-        Log.system.info('更新持仓', JSON.stringify(accPosi.position, null, 2));
+        Log.system.info('更新持仓', JSON.stringify(calcOutput.position, null, 2));
         // 更新持仓
-        await db.model.Position.upsert(accPosi.position);
+        await db.model.Position.upsert(calcOutput.position);
       }
     }
-    Log.system.info('更新账户资产', JSON.stringify(account, null, 2));
+    if (calcOutput.earning) {
+      // 记录收益表
+      Log.system.info('更新收益表', JSON.stringify(calcOutput.earning, null, 2));
+      await db.model.Earning.upsert(calcOutput.earning);
+      await SlackAlerter.sendEarning(calcOutput.earning);
+    }
+    Log.system.info('更新账户资产', JSON.stringify(calcOutput.account.assets, null, 2));
     // 更新账户资产
-    await db.model.Account.upsert(account);
+    await AccountManager.updateAssets(calcOutput.account.assets);
 
     Log.system.info('更新持仓[终了]');
   }
