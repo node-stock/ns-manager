@@ -89,7 +89,7 @@ const testBuyTrader = async () => {
   if (!await AccountManager.get(userId)) {
     assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
   }
-  const order: types.LimitOrder = {
+  const order: types.Order = {
     account_id: 'test',
     symbol: types.Pair.XRP_JPY,
     price: '1675000',
@@ -110,7 +110,7 @@ const testBuyCloseTrader = async () => {
   if (!await AccountManager.get(userId)) {
     assert(false, '未查询到test账号信息，请确认好在进行交易测试！');
   }
-  const order: types.LimitOrder = {
+  const order: types.Order = {
     account_id: 'test',
     eventId: Date.now(),
     symbol: types.Pair.BTC_JPY,
@@ -128,7 +128,7 @@ const testBuyCloseTrader = async () => {
 }
 
 const testSellTrader = async () => {
-  const order: types.LimitOrder = {
+  const order: types.Order = {
     account_id: 'test',
     symbol: '6664',
     side: types.OrderSide.Sell,
@@ -238,7 +238,7 @@ const testSetPosition = async () => {
     positions,// positions: [], // 
     transactions: []
   }
-  const order: types.LimitOrder = {
+  const order: types.Order = {
     account_id: 'test',
     symbol: types.Pair.BTC_JPY,
     price: '1675000',

@@ -83,6 +83,9 @@ export class SignalManager {
     if (signal.side) {
       delOpt.where.side = signal.side;
     }
+    if (signal.timeframe) {
+      delOpt.where.timeframe = signal.timeframe;
+    }
     if (signal.backtest) {
       delOpt.where.backtest = signal.backtest;
       // delOpt.where.mocktime = signal.mocktime;
@@ -194,7 +197,7 @@ export class OrderManager {
         price: String(order.price),
         symbol: order.symbol,
         symbolType: <types.SymbolType>order.type,
-        orderType: types.OrderType.Limit,
+        orderType: <types.OrderType>order.order_type,
         tradeType: types.TradeType.Spot,
         side: <types.OrderSide>order.side,
         amount: String(order.quantity),
@@ -278,7 +281,7 @@ export class OrderManager {
             symbolType: <types.SymbolType>order.type,
             eventType: types.EventType.Order,
             tradeType: types.TradeType.Spot,
-            orderType: types.OrderType.Limit,
+            orderType: <types.OrderType>order.order_type,
             side: <types.OrderSide>order.side,
             backtest: order.backtest
           });
