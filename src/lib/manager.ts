@@ -211,7 +211,7 @@ export class OrderManager {
       return;
     }
 
-    Log.system.info('更新账户资产', JSON.stringify(calcOutput.account.assets, null, 2));
+    Log.system.info('更新账户资产', JSON.stringify(calcOutput.account.assets));
     // 更新账户资产
     await AccountManager.updateAssets(calcOutput.account.assets);
 
@@ -404,7 +404,7 @@ export class PositionManager {
       await db.model.Earning.upsert(calcOutput.earning);
       await SlackAlerter.sendEarning(calcOutput.earning);
     }
-    Log.system.info('更新账户资产', JSON.stringify(calcOutput.account.assets, null, 2));
+    Log.system.info('更新账户资产', JSON.stringify(calcOutput.account.assets));
     // 更新账户资产
     await AccountManager.updateAssets(calcOutput.account.assets);
 
